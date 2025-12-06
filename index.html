@@ -1,0 +1,368 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="theme-color" content="#0d1117">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <title>Daily Retro</title>
+    <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
+    <style>
+        /* --- Mobile Reset & Base --- */
+        * { -webkit-tap-highlight-color: transparent; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: #0d1117;
+            color: #c9d1d9;
+            display: flex; flex-direction: column; align-items: center;
+            padding: 20px 16px 100px 16px; /* 底部留白給固定按鈕 */
+            margin: 0;
+            min-height: 100vh;
+        }
+
+        /* --- Header --- */
+        header { text-align: left; width: 100%; margin-bottom: 20px; padding-left: 5px; }
+        h1 { margin: 0; font-size: 1.8rem; color: #fff; font-weight: 800; letter-spacing: -0.5px; }
+        .date-display { color: #8b949e; font-size: 0.95rem; margin-top: 4px; font-weight: 500; }
+
+        /* --- Cards & Layout --- */
+        .container { width: 100%; max-width: 600px; display: flex; flex-direction: column; gap: 15px; }
+        .card { background: #161b22; border: 1px solid #30363d; border-radius: 16px; padding: 20px; box-shadow: 0 4px 20px rgba(0,0,0,0.2); }
+        
+        /* --- Big Tappable Rows --- */
+        .checklist-item {
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 16px 0; border-bottom: 1px solid #21262d;
+            cursor: pointer; transition: background 0.2s;
+        }
+        .checklist-item:active { background: rgba(255,255,255,0.03); }
+        .checklist-item:last-child { border-bottom: none; }
+        
+        .check-content { flex: 1; padding-right: 15px; }
+        .check-label { font-size: 1.1rem; color: #e6edf3; font-weight: 600; display: block; margin-bottom: 4px; }
+        .check-sub { font-size: 0.85rem; color: #8b949e; line-height: 1.3; }
+
+        /* --- Custom Toggle Switch --- */
+        .toggle-switch { position: relative; width: 56px; height: 32px; flex-shrink: 0; pointer-events: none; /* 讓點擊穿透到父層 */ }
+        .toggle-switch input { opacity: 0; width: 0; height: 0; }
+        .slider { position: absolute; top: 0; left: 0; right: 0; bottom: 0; background-color: #30363d; transition: .3s cubic-bezier(0.4, 0.0, 0.2, 1); border-radius: 34px; }
+        .slider:before { position: absolute; content: ""; height: 26px; width: 26px; left: 3px; bottom: 3px; background-color: white; transition: .3s cubic-bezier(0.4, 0.0, 0.2, 1); border-radius: 50%; box-shadow: 0 2px 4px rgba(0,0,0,0.2); }
+        
+        /* Checked State */
+        .checklist-item.checked .slider { background-color: #238636; }
+        .checklist-item.checked .slider:before { transform: translateX(24px); }
+        .checklist-item.checked .check-label { color: #3fb950; }
+
+        /* --- Inputs (Mobile Optimized) --- */
+        .section-title { font-size: 0.9rem; color: #58a6ff; font-weight: bold; margin-top: 25px; margin-bottom: 10px; text-transform: uppercase; letter-spacing: 1px; }
+        .text-input {
+            width: 100%; background: #0d1117; border: 1px solid #30363d; color: #fff;
+            padding: 16px; border-radius: 12px; font-size: 16px; /* 防止 iOS Zoom */
+            box-sizing: border-box; resize: none; -webkit-appearance: none;
+        }
+        .text-input:focus { outline: none; border-color: #58a6ff; ring: 2px solid rgba(88, 166, 255, 0.3); }
+
+        /* --- Floating Action Button (FAB) Style Submit --- */
+        .fab-container {
+            position: fixed; bottom: 20px; left: 20px; right: 20px; z-index: 99;
+            max-width: 600px; margin: 0 auto;
+        }
+        .action-btn {
+            background: #238636; color: #fff; border: none; padding: 18px; border-radius: 50px;
+            font-size: 1.1rem; font-weight: bold; cursor: pointer; width: 100%;
+            box-shadow: 0 4px 15px rgba(35, 134, 54, 0.4);
+            display: flex; align-items: center; justify-content: center; gap: 8px;
+            transition: transform 0.1s;
+        }
+        .action-btn:active { transform: scale(0.96); }
+        
+        /* --- Result Card --- */
+        .result-card {
+            background: linear-gradient(145deg, #161b22, #0d1117);
+            border: 2px solid #30363d; border-radius: 16px; padding: 30px 20px;
+            text-align: center; display: none; position: relative; overflow: hidden;
+            margin-bottom: 80px; /* 避免被按鈕擋住 */
+        }
+        .result-card.S { border-color: #ffd700; box-shadow: 0 0 20px rgba(255, 215, 0, 0.15); }
+        .result-card.A { border-color: #238636; }
+        
+        .rank-badge { font-size: 5rem; font-weight: 900; margin: 15px 0; line-height: 1; text-shadow: 0 5px 15px rgba(0,0,0,0.5); }
+        .rank-S { color: #ffd700; background: -webkit-linear-gradient(#ffd700, #ffa500); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        .rank-A { color: #3fb950; }
+        .rank-B { color: #58a6ff; }
+        .rank-C { color: #8b949e; }
+
+        .summary-text { color: #e6edf3; font-size: 1.2rem; margin: 20px 0; font-style: italic; white-space: pre-wrap; line-height: 1.5; }
+        .next-step { background: rgba(56, 139, 253, 0.1); color: #58a6ff; padding: 15px; border-radius: 12px; font-size: 1rem; margin-top: 20px; border: 1px dashed rgba(88, 166, 255, 0.4); text-align: left; }
+        
+        /* --- History --- */
+        .history-list { margin-top: 10px; border-top: 1px solid #21262d; padding-top: 20px; padding-bottom: 80px;}
+        .history-item { 
+            background: #161b22; padding: 16px; border-radius: 12px; margin-bottom: 12px; 
+            display: flex; justify-content: space-between; align-items: center; border: 1px solid #30363d;
+        }
+        .del-btn { background: rgba(255, 255, 255, 0.05); border: none; color: #8b949e; cursor: pointer; padding: 8px 12px; border-radius: 8px; font-size: 14px; }
+        
+        .hidden { display: none !important; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <header>
+        <div class="date-display" id="date-display">Monday, Jan 01</div>
+        <h1>Daily Retro</h1>
+    </header>
+
+    <div id="input-view">
+        <div class="card">
+            <div class="checklist-item" onclick="toggleRow(this, 'check-1')">
+                <div class="check-content">
+                    <span class="check-label">👀 可視化目標</span>
+                    <span class="check-sub">書本放在桌上/顯眼處？</span>
+                </div>
+                <label class="toggle-switch">
+                    <input type="checkbox" id="check-1">
+                    <span class="slider"></span>
+                </label>
+            </div>
+
+            <div class="checklist-item" onclick="toggleRow(this, 'check-2')">
+                <div class="check-content">
+                    <span class="check-label">⚓️ 執行錨點</span>
+                    <span class="check-sub">既定動作後立刻開始？</span>
+                </div>
+                <label class="toggle-switch">
+                    <input type="checkbox" id="check-2">
+                    <span class="slider"></span>
+                </label>
+            </div>
+
+            <div class="checklist-item" onclick="toggleRow(this, 'check-3')">
+                <div class="check-content">
+                    <span class="check-label">📵 拒絕手機</span>
+                    <span class="check-sub">休息時間沒滑手機？</span>
+                </div>
+                <label class="toggle-switch">
+                    <input type="checkbox" id="check-3">
+                    <span class="slider"></span>
+                </label>
+            </div>
+
+            <div class="checklist-item" onclick="toggleRow(this, 'check-4')">
+                <div class="check-content">
+                    <span class="check-label">⏳ 完成微行動</span>
+                    <span class="check-sub">專注至少 15 分鐘？</span>
+                </div>
+                <label class="toggle-switch">
+                    <input type="checkbox" id="check-4">
+                    <span class="slider"></span>
+                </label>
+            </div>
+        </div>
+
+        <div class="section-title">💡 今日亮點 (Highlight)</div>
+        <textarea id="summary-input" class="text-input" rows="2" placeholder="學會了什麼..."></textarea>
+
+        <div class="section-title">🚀 明日預約 (Anchor)</div>
+        <input type="text" id="anchor-input" class="text-input" placeholder="例如：泡完咖啡後...">
+        
+        <div class="fab-container">
+            <button class="action-btn" onclick="generateReport()">
+                <span>✨ 生成戰報</span>
+            </button>
+        </div>
+        
+        <div class="history-list" id="history-container">
+            <div class="section-title" style="margin-top:0;">📜 歷史紀錄</div>
+            <div id="history-items"></div>
+        </div>
+    </div>
+
+    <div id="result-view" class="result-card hidden">
+        <div style="font-size:12px; color:#8b949e; text-transform:uppercase; letter-spacing:2px; font-weight:bold;">Daily Performance</div>
+        <div class="date-display" id="res-date" style="margin-bottom:10px;"></div>
+        
+        <div class="rank-badge" id="res-rank">S</div>
+        
+        <div style="display:flex; justify-content:center; gap:8px; margin-bottom:15px; opacity:0.8;">
+            <span id="res-stars" style="color:#e6edf3; font-size:14px; letter-spacing:3px;"></span>
+        </div>
+
+        <div class="summary-text" id="res-summary"></div>
+
+        <div class="next-step">
+            <span style="font-weight:bold; display:block; margin-bottom:6px; color:#fff;">⚡️ Next Action</span>
+            <span id="res-anchor"></span>
+        </div>
+
+        <div style="margin-top:30px; display:flex; flex-direction:column; gap:10px;">
+            <button class="action-btn" style="position:static; background:#1f6feb; box-shadow:none;" onclick="saveImage()">📸 下載卡片</button>
+            <button onclick="resetView()" style="background:none; border:none; color:#8b949e; padding:15px; font-size:16px;">↩️ 返回編輯</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    const LOG_KEY = 'daily_retro_mobile_logs';
+    
+    // 初始化日期
+    const today = new Date();
+    const dateStr = today.toLocaleDateString('zh-TW', { month: 'long', day: 'numeric', weekday: 'long' });
+    document.getElementById('date-display').innerText = dateStr;
+
+    // 載入歷史
+    renderHistory();
+
+    // 觸覺回饋 Helper
+    function vibrate() {
+        if (navigator.vibrate) navigator.vibrate(10); // 輕微震動
+    }
+
+    // Toggle Row Logic
+    function toggleRow(row, checkboxId) {
+        const checkbox = document.getElementById(checkboxId);
+        checkbox.checked = !checkbox.checked;
+        
+        // Update Visuals
+        if(checkbox.checked) {
+            row.classList.add('checked');
+        } else {
+            row.classList.remove('checked');
+        }
+        vibrate();
+    }
+
+    function generateReport() {
+        vibrate();
+        const c1 = document.getElementById('check-1').checked;
+        const c2 = document.getElementById('check-2').checked;
+        const c3 = document.getElementById('check-3').checked;
+        const c4 = document.getElementById('check-4').checked;
+        const summary = document.getElementById('summary-input').value.trim() || "今天專注於執行計畫。";
+        const anchor = document.getElementById('anchor-input').value.trim() || "無計畫";
+
+        // 計算分數
+        let score = 0;
+        if(c1) score++;
+        if(c2) score++;
+        if(c3) score++;
+        if(c4) score++;
+
+        let rank = 'C';
+        if(score === 4) rank = 'S';
+        else if(score === 3) rank = 'A';
+        else if(score === 2) rank = 'B';
+
+        // 呈現資料
+        document.getElementById('res-date').innerText = dateStr;
+        
+        const rankEl = document.getElementById('res-rank');
+        rankEl.innerText = rank;
+        rankEl.className = `rank-badge rank-${rank}`;
+
+        // 視覺化星星
+        const circles = [];
+        for(let i=0; i<4; i++) {
+            circles.push(i < score ? "●" : "○");
+        }
+        document.getElementById('res-stars').innerText = circles.join(' ');
+
+        document.getElementById('res-summary').innerText = summary;
+        document.getElementById('res-anchor').innerText = anchor;
+
+        const resultCard = document.getElementById('result-view');
+        const inputView = document.getElementById('input-view');
+        
+        // 切換視圖
+        resultCard.className = `result-card ${rank}`; 
+        resultCard.classList.remove('hidden');
+        inputView.classList.add('hidden');
+        
+        // 滾動到頂部
+        window.scrollTo(0,0);
+
+        // 儲存資料
+        saveLog({
+            date: new Date().toLocaleDateString('zh-TW', {month:'2-digit', day:'2-digit'}),
+            timestamp: Date.now(),
+            rank: rank,
+            summary: summary
+        });
+    }
+
+    function resetView() {
+        document.getElementById('input-view').classList.remove('hidden');
+        document.getElementById('result-view').classList.add('hidden');
+    }
+
+    function saveImage() {
+        vibrate();
+        const element = document.getElementById('result-view');
+        // 隱藏按鈕
+        const btns = element.querySelectorAll('button');
+        btns.forEach(b => b.style.display = 'none');
+
+        html2canvas(element, { 
+            backgroundColor: '#161b22',
+            scale: 2 // 高解析度
+        }).then(canvas => {
+            const link = document.createElement('a');
+            link.download = `Retro_${new Date().toISOString().slice(0,10)}.png`;
+            link.href = canvas.toDataURL();
+            link.click();
+
+            // 復原按鈕
+            btns.forEach(b => b.style.display = 'block');
+        });
+    }
+
+    function saveLog(data) {
+        let logs = JSON.parse(localStorage.getItem(LOG_KEY) || '[]');
+        logs.unshift(data); 
+        if(logs.length > 30) logs.pop(); // 只留最近30筆
+        localStorage.setItem(LOG_KEY, JSON.stringify(logs));
+        renderHistory();
+    }
+
+    function deleteLog(timestamp) {
+        if(!confirm('刪除紀錄？')) return;
+        let logs = JSON.parse(localStorage.getItem(LOG_KEY) || '[]');
+        logs = logs.filter(l => l.timestamp !== timestamp);
+        localStorage.setItem(LOG_KEY, JSON.stringify(logs));
+        renderHistory();
+    }
+
+    function renderHistory() {
+        const logs = JSON.parse(localStorage.getItem(LOG_KEY) || '[]');
+        const container = document.getElementById('history-items');
+        container.innerHTML = '';
+
+        logs.forEach(log => {
+            const div = document.createElement('div');
+            div.className = 'history-item';
+            div.innerHTML = `
+                <div style="display:flex; align-items:center; overflow:hidden;">
+                    <div style="background:#21262d; border-radius:8px; width:40px; height:40px; display:flex; align-items:center; justify-content:center; font-weight:900; color:${getRankColor(log.rank)}; margin-right:12px; flex-shrink:0;">${log.rank}</div>
+                    <div style="overflow:hidden;">
+                        <div style="color:#8b949e; font-size:0.8rem; margin-bottom:2px;">${log.date}</div>
+                        <div style="color:#e6edf3; font-size:0.95rem; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${log.summary}</div>
+                    </div>
+                </div>
+                <button class="del-btn" onclick="deleteLog(${log.timestamp})">✕</button>
+            `;
+            container.appendChild(div);
+        });
+    }
+
+    function getRankColor(r) {
+        if(r === 'S') return '#ffd700';
+        if(r === 'A') return '#3fb950';
+        if(r === 'B') return '#58a6ff';
+        return '#8b949e';
+    }
+</script>
+
+</body>
+</html>
