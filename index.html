@@ -3,27 +3,30 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Life Quest v11: Genesis</title>
+    <title>Life Quest v12: Final</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        /* --- CORE VARIABLES --- */
+        /* --- 1. 核心變數 --- */
         :root {
             --primary: #2c3e50; --accent: #e67e22; 
             --habit: #f1c40f; --daily: #3498db; --todo: #e67e22;
-            --bg-glass: rgba(255, 255, 255, 0.92);
+            --bg-glass: rgba(255, 255, 255, 0.94);
             --nav-h: calc(65px + env(safe-area-inset-bottom, 20px));
             --radius: 12px;
         }
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; user-select: none; }
         body { margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: #1a1a1a; color: var(--primary); overflow: hidden; height: 100vh; }
 
-        /* --- VISUAL LAYERS --- */
+        /* --- 2. 視覺層 (Canvas) --- */
         #world { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 0; pointer-events: none; }
-        
+
+        /* --- 3. 介面佈局 --- */
         .app-layout { position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: flex; flex-direction: column; z-index: 10; }
         
-        /* The Spacer allows peeking at the tower */
-        .header-spacer { flex: 0 0 35vh; transition: flex 0.5s ease; cursor: pointer; }
+        /* 點擊上方透明區可看塔 */
+        .header-spacer { flex: 0 0 35vh; transition: flex 0.5s ease; cursor: pointer; position: relative; }
+        .header-spacer::after { content: '▼ 點擊切換視角'; position: absolute; bottom: 10px; left: 50%; transform: translateX(-50%); color: rgba(255,255,255,0.6); font-size: 0.8rem; opacity: 0; transition: 0.3s; }
+        .header-spacer:hover::after { opacity: 1; }
         .header-spacer.collapsed { flex: 0 0 8vh; }
 
         .main-sheet {
@@ -34,7 +37,8 @@
             overflow-y: auto; scroll-behavior: smooth; transition: transform 0.3s;
         }
 
-        /* --- HEADER & LORE --- */
+        /* --- 4. 首頁組件 --- */
+        /* 數據與徽章 */
         .profile-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 20px; }
         .stats-title { font-size: 0.7rem; color: #7f8c8d; text-transform: uppercase; letter-spacing: 1px; }
         .stats-number { font-size: 2rem; font-weight: 800; color: var(--primary); }
@@ -42,6 +46,7 @@
         .badge { width: 30px; height: 30px; border-radius: 50%; background: #ccc; display: flex; justify-content: center; align-items: center; font-size: 1rem; filter: grayscale(100%); opacity: 0.5; transition: 0.5s; }
         .badge.unlocked { filter: grayscale(0%); opacity: 1; background: white; transform: scale(1.1); box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
 
+        /* 冒險指引卡 */
         .lore-card {
             background: #fff; border-left: 4px solid var(--daily); padding: 15px; border-radius: 12px;
             margin-bottom: 20px; cursor: pointer; box-shadow: 0 2px 8px rgba(0,0,0,0.05);
@@ -49,17 +54,22 @@
         .lore-title { font-weight: bold; font-size: 0.9rem; margin-bottom: 5px; color: var(--primary); display:flex; justify-content:space-between; }
         .lore-desc { font-size: 0.9rem; color: #666; white-space: pre-wrap; }
 
-        /* --- 3-COLUMN GRID SYSTEM (From v6.1) --- */
+        /* 三欄式看板 */
         .grid-board { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 15px; }
         .col-card { background: rgba(241, 242, 246, 0.8); padding: 10px; border-radius: var(--radius); border: 1px solid rgba(0,0,0,0.05); display: flex; flex-direction: column; }
         .col-header { 
             display: flex; justify-content: space-between; align-items: center; 
             font-weight: bold; color: #636e72; padding: 5px 5px 10px 5px; font-size: 0.85rem; text-transform: uppercase; 
         }
-        .btn-col-add { background: none; border: 2px dashed #ccc; border-radius: 8px; color: #999; padding: 8px; margin-bottom: 10px; cursor: pointer; font-weight: bold; text-align: center; transition: 0.2s; }
+        
+        /* 欄位內的快速新增按鈕 (觸發彈窗) */
+        .btn-col-add { 
+            background: none; border: 2px dashed #ccc; border-radius: 8px; color: #999; 
+            padding: 8px; margin-bottom: 10px; cursor: pointer; font-weight: bold; text-align: center; transition: 0.2s; 
+        }
         .btn-col-add:hover { border-color: var(--primary); color: var(--primary); background: rgba(255,255,255,0.5); }
 
-        /* --- TASK ITEMS --- */
+        /* --- 5. 任務列表 --- */
         .task-list { list-style: none; padding: 0; margin: 0; }
         .task-item {
             background: white; padding: 12px; margin-bottom: 8px; border-radius: 10px;
@@ -74,8 +84,9 @@
         .check-box { 
             width: 24px; height: 24px; background: #eee; border-radius: 6px; margin-right: 12px; 
             cursor: pointer; flex-shrink: 0; display: flex; justify-content: center; align-items: center; 
-            color: white; font-weight: bold; font-size: 0.9rem; margin-top: 2px;
+            color: white; font-weight: bold; font-size: 0.9rem; margin-top: 2px; transition: 0.2s;
         }
+        .check-box:active { transform: scale(0.8); }
         .type-habit .check-box { background: var(--habit); } .type-habit .check-box::after { content: '+'; }
         
         .task-item.done { opacity: 0.6; background: #f8f9fa; }
@@ -84,11 +95,14 @@
         .type-daily.done .check-box { background: #bdc3c7; }
 
         .task-content { flex: 1; min-width: 0; cursor: pointer; }
-        .task-title { font-size: 0.95rem; font-weight: 600; line-height: 1.4; }
-        .task-desc { font-size: 0.8rem; color: #999; display: none; padding-top: 5px; border-top: 1px dashed #eee; margin-top: 5px; white-space: pre-wrap; }
-        .task-item.expanded .task-desc { display: block; }
+        .task-title { font-size: 0.95rem; font-weight: 600; line-height: 1.4; margin-bottom: 2px; }
+        .task-desc { 
+            font-size: 0.85rem; color: #888; display: none; margin-top: 5px; 
+            padding-top: 5px; border-top: 1px dashed #eee; white-space: pre-wrap; line-height: 1.4;
+        }
+        .task-item.expanded .task-desc { display: block; } /* 點擊展開詳情 */
 
-        /* --- OTHER TABS --- */
+        /* --- 6. 其他分頁組件 --- */
         .tab-content { display: none; animation: slideUp 0.3s cubic-bezier(0.2, 0.8, 0.2, 1); }
         .tab-content.active { display: block; }
         @keyframes slideUp { from { opacity:0; transform:translateY(20px); } to { opacity:1; transform:translateY(0); } }
@@ -96,9 +110,9 @@
         .void-box { background: #2d3436; color: #dfe6e9; padding: 30px; border-radius: 16px; text-align: center; }
         .focus-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(44,62,80,0.98); z-index: 3000; display: none; flex-direction: column; justify-content: center; align-items: center; color: white; backdrop-filter: blur(10px); }
 
-        /* --- UI ELEMENTS --- */
         h2 { font-size: 0.9rem; color: #95a5a6; text-transform: uppercase; margin: 20px 0 10px 0; border-bottom: 1px solid #eee; padding-bottom: 5px; display:flex; justify-content:space-between; }
-        .btn { border: none; padding: 10px 20px; border-radius: 10px; font-weight: bold; cursor: pointer; font-size: 0.9rem; display: inline-flex; align-items: center; gap: 6px; }
+        .btn { border: none; padding: 10px 20px; border-radius: 10px; font-weight: bold; cursor: pointer; font-size: 0.9rem; display: inline-flex; align-items: center; gap: 6px; transition: 0.1s; }
+        .btn:active { transform: scale(0.95); }
         .btn-primary { background: var(--primary); color: white; box-shadow: 0 4px 10px rgba(44,62,80,0.3); }
         .btn-ghost { background: transparent; color: #aaa; border: 1px solid #ddd; font-size: 0.8rem; padding: 5px 10px; }
         .btn-danger { background: #ffeaa7; color: #d63031; border: 1px solid #d63031; }
@@ -109,9 +123,10 @@
         .fab:hover { transform: scale(1.1); } .fab:active { transform: rotate(90deg); }
 
         .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 2000; display: none; justify-content: center; align-items: center; padding: 20px; backdrop-filter: blur(5px); }
-        .modal { background: white; width: 100%; max-width: 420px; padding: 25px; border-radius: 20px; box-shadow: 0 20px 50px rgba(0,0,0,0.3); animation: popIn 0.3s; }
+        .modal { background: white; width: 100%; max-width: 420px; padding: 25px; border-radius: 16px; animation: popIn 0.3s; box-shadow: 0 20px 60px rgba(0,0,0,0.3); }
         @keyframes popIn { from { transform: scale(0.9); opacity: 0; } to { transform: scale(1); opacity: 1; } }
 
+        /* 輸入視窗樣式 */
         .type-select { display: flex; gap: 8px; margin-bottom: 20px; }
         .type-opt { flex: 1; padding: 10px; text-align: center; border: 1px solid #ddd; border-radius: 8px; cursor: pointer; font-size: 0.9rem; font-weight: bold; color: #888; transition: 0.2s; }
         .type-opt.active[data-t="habit"] { background: #fff8e1; color: var(--habit); border-color: var(--habit); }
@@ -206,7 +221,8 @@
                 <h2>專注結界</h2>
                 <div style="background:white; padding:20px; border-radius:12px; text-align:center;">
                     <i class="fas fa-stopwatch" style="font-size:2rem; color:var(--primary); margin-bottom:10px;"></i>
-                    <button class="btn btn-primary" style="width:100%;" onclick="app.startFocus()">開啟 25min 結界</button>
+                    <p style="font-size:0.9rem; color:#666;">25 分鐘絕對專注。</p>
+                    <button class="btn btn-primary" style="width:100%;" onclick="app.startFocus()">開啟結界</button>
                 </div>
             </div>
 
@@ -244,15 +260,15 @@
             <h3 style="margin-top:0;">新增項目</h3>
             <input id="inp-title" class="input-box" placeholder="標題 (必填)">
             <textarea id="inp-desc" class="input-box" rows="3" placeholder="詳細內容 (選填)" style="resize:none;"></textarea>
+            
             <div class="type-select">
                 <div class="type-opt active" data-t="habit" onclick="ui.setType('habit', this)">習慣</div>
                 <div class="type-opt" data-t="daily" onclick="ui.setType('daily', this)">每日</div>
                 <div class="type-opt" data-t="todo" onclick="ui.setType('todo', this)">待辦</div>
             </div>
-            <div style="display:flex; gap:10px;">
-                <button class="btn btn-primary" style="flex:1" onclick="app.add()">新增</button>
-                <button class="btn btn-ghost" style="flex:1" onclick="document.getElementById('modal-add').style.display='none'">取消</button>
-            </div>
+            
+            <button class="btn btn-primary" style="width:100%" onclick="app.add()">新增</button>
+            <div style="text-align:center; margin-top:15px; color:#999; cursor:pointer;" onclick="document.getElementById('modal-add').style.display='none'">取消</div>
         </div>
     </div>
 
@@ -302,7 +318,7 @@
             cvs: document.getElementById('world'), ctx: document.getElementById('world').getContext('2d'),
             particles: [],
             init() { window.addEventListener('resize', ()=>this.draw()); this.draw(); this.loop(); },
-            spawn(x,y,c){ for(let i=0;i<10;i++) this.particles.push({x,y,vx:(Math.random()-0.5)*10,vy:(Math.random()-0.5)*10,life:1,c}); },
+            spawn(x,y,c){ for(let i=0;i<12;i++) this.particles.push({x,y,vx:(Math.random()-0.5)*10,vy:(Math.random()-0.5)*10,life:1,c}); },
             draw() {
                 const w=this.cvs.width=window.innerWidth, h=this.cvs.height=window.innerHeight;
                 const ctx=this.ctx, count=store.db.legacy;
@@ -334,10 +350,10 @@
             loop(){ this.draw(); requestAnimationFrame(()=>this.loop()); }
         };
 
-        /* --- 3. STORE --- */
+        /* --- 3. DATA STORE --- */
         const store = {
-            db: JSON.parse(localStorage.getItem('lqe_v11')) || { tasks: [], legacy: 0, journals: [], pool: [{t:"深呼吸",d:"3次"}], lore: "設定目標...", lastLogin: Date.now() },
-            save() { localStorage.setItem('lqe_v11', JSON.stringify(this.db)); app.render(); app.checkBadges(); },
+            db: JSON.parse(localStorage.getItem('lqe_v12')) || { tasks: [], legacy: 0, journals: [], pool: [{t:"深呼吸",d:"3次"}], lore: "設定目標...", lastLogin: Date.now() },
+            save() { localStorage.setItem('lqe_v12', JSON.stringify(this.db)); app.render(); app.checkBadges(); },
             checkReset() {
                 const today = new Date().toDateString();
                 if(today !== new Date(this.db.lastLogin).toDateString()) {
@@ -347,7 +363,7 @@
             }
         };
 
-        /* --- 4. LOGIC --- */
+        /* --- 4. APP LOGIC --- */
         let addType = 'habit', currentMood = '';
         const badges = [{l:10,i:'🌱',t:'初學者'},{l:50,i:'🔨',t:'築塔者'},{l:100,i:'🏰',t:'堡壘'},{l:500,i:'👑',t:'國王'}];
 
@@ -363,11 +379,12 @@
                 document.getElementById('legacy-count').innerText = store.db.legacy;
                 document.getElementById('lore-text').innerText = store.db.lore;
                 document.getElementById('inp-lore').value = store.db.lore;
+                
                 ['habit','daily','todo'].forEach(type => {
                     const ul = document.getElementById('list-'+type); ul.innerHTML='';
                     store.db.tasks.forEach(t => {
                         if(t.type === type) {
-                            if(type==='todo' && t.done) return; // Hide done todos
+                            if(type==='todo' && t.done) return; 
                             ul.innerHTML += `
                             <li class="task-item type-${t.type} ${t.done?'done':''}" onclick="this.classList.toggle('expanded')">
                                 <div class="check-box" onclick="event.stopPropagation(); app.check('${t.id}', event)"></div>
@@ -390,7 +407,7 @@
             },
             add() {
                 const t=document.getElementById('inp-title').value, d=document.getElementById('inp-desc').value;
-                if(t) { store.db.tasks.push({id:Date.now().toString(36), type:addType, title:t, desc:d, done:false}); store.save(); document.getElementById('modal-add').style.display='none'; document.getElementById('inp-title').value=''; sfx.click(); }
+                if(t) { store.db.tasks.push({id:Date.now().toString(36), type:addType, title:t, desc:d, done:false}); store.save(); document.getElementById('modal-add').style.display='none'; document.getElementById('inp-title').value=''; document.getElementById('inp-desc').value=''; sfx.click(); }
             },
             check(id, e) {
                 const t = store.db.tasks.find(x=>x.id==id);
@@ -399,7 +416,7 @@
                     if(t.type==='habit') { store.db.legacy++; sfx.win(); }
                     else { 
                         t.done=!t.done; 
-                        if(t.type==='todo' && t.done) { store.db.legacy++; sfx.win(); }
+                        if(t.type==='todo' && t.done) { store.db.legacy++; sfx.win(); } // Todo adds legacy on done
                         else sfx.click(); 
                     }
                     store.save();
@@ -437,13 +454,14 @@
                 let s=25*60; this.tmr=setInterval(()=>{ s--; document.getElementById('focus-timer').innerText=`${Math.floor(s/60)}:${(s%60).toString().padStart(2,'0')}`; if(s<=0){clearInterval(this.tmr);sfx.win();alert('完成');this.stopFocus();} },1000);
             },
             stopFocus(){ clearInterval(this.tmr); document.getElementById('focus-overlay').style.display='none'; },
-            setMood(m){ currentMood=m; sfx.click(); },
+            setMood(m){ currentMood=m; sfx.click(); document.querySelectorAll('.mood-btn').forEach(b=>b.style.opacity=b.innerText===m?'1':'0.5'); },
             saveJournal(){ const t=document.getElementById('j-note').value; if(t||currentMood){ store.db.journals.unshift({date:new Date().toLocaleString(), mood:currentMood, text:t}); store.save(); document.getElementById('j-note').value=''; sfx.win(); } },
             exportData() { const a=document.createElement('a'); a.href="data:text/json;charset=utf-8,"+encodeURIComponent(JSON.stringify(store.db)); a.download="sanctuary_data.json"; a.click(); },
-            reset(){ if(confirm('警告：刪除所有資料？')){ localStorage.removeItem('lqe_v11'); location.reload(); } },
+            reset(){ if(confirm('警告：刪除所有資料？')){ localStorage.removeItem('lqe_v12'); location.reload(); } },
             toggleView() { document.querySelector('.header-spacer').classList.toggle('collapsed'); }
         };
 
+        /* --- 5. UI HELPERS --- */
         const ui = {
             tab(id, el) { document.querySelectorAll('.tab-content').forEach(e=>e.classList.remove('active')); document.getElementById('tab-'+id).classList.add('active'); document.querySelectorAll('.nav-item').forEach(e=>e.classList.remove('active')); el.classList.add('active'); document.querySelector('.fab').style.display=id==='home'?'flex':'none'; sfx.click(); },
             modal(id, type) { 
