@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Life Quest Legacy</title>
+    <title>Life Quest Journal</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
         :root {
@@ -29,78 +29,96 @@
 
         .container { max-width: 600px; margin: 0 auto; padding: 20px; }
 
-        /* --- Legacy Header (永久累積區) --- */
+        /* --- Header (Global) --- */
         header {
-            margin-bottom: 25px;
-            text-align: center;
-            background: white; padding: 20px; border-radius: 16px;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.04);
-            position: relative; overflow: hidden;
+            margin-bottom: 20px; text-align: center; background: white; padding: 15px; border-radius: 16px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.03); display: flex; justify-content: space-between; align-items: center;
         }
-        
-        .legacy-label { font-size: 0.8rem; color: #999; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 5px; }
-        .legacy-count { font-size: 3rem; font-weight: 800; color: var(--primary); line-height: 1; }
-        .legacy-unit { font-size: 1rem; color: #bbb; font-weight: normal; }
+        .header-stat { text-align: left; }
+        .legacy-label { font-size: 0.7rem; color: #999; text-transform: uppercase; letter-spacing: 1px; }
+        .legacy-count { font-size: 1.5rem; font-weight: 800; color: var(--primary); }
 
-        /* 金幣雨動畫容器 */
-        .particle-container {
-            position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none;
-        }
+        /* --- Tabs Logic --- */
+        .tab-content { display: none; animation: fadeIn 0.3s ease; }
+        .tab-content.active { display: block; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
 
-        /* --- Active Zone --- */
-        .section-header {
-            display: flex; justify-content: space-between; align-items: flex-end;
-            margin-bottom: 15px; padding: 0 5px;
-        }
+        /* --- Task List Styles (From v3.4) --- */
+        .section-header { display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 15px; padding: 0 5px; }
         .section-title { font-size: 0.9rem; color: #aaa; font-weight: bold; letter-spacing: 1px; }
-
         .task-list { list-style: none; padding: 0; margin: 0; min-height: 50px;}
-        
         .task-item {
-            background: white;
-            padding: 16px; margin-bottom: 12px; border-radius: 12px;
-            display: flex; align-items: center;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.03);
-            transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
-            position: relative;
+            background: white; padding: 16px; margin-bottom: 12px; border-radius: 12px;
+            display: flex; align-items: center; box-shadow: 0 4px 15px rgba(0,0,0,0.03);
+            transition: all 0.3s; position: relative;
         }
-
         .check-circle {
             width: 24px; height: 24px; border: 2px solid var(--accent); border-radius: 50%;
-            margin-right: 15px; cursor: pointer; flex-shrink: 0;
-            transition: background 0.2s;
+            margin-right: 15px; cursor: pointer; flex-shrink: 0; transition: background 0.2s;
         }
-        .check-circle:active { background: var(--accent); }
         .task-text { flex-grow: 1; font-size: 1.05rem; }
-
-        /* --- Sediment Zone (The Pile) --- */
-        .divider-area {
-            margin: 40px 0 20px 0; text-align: center; position: relative;
-        }
         
-        /* 淨化按鈕 (Harvest Button) */
-        .harvest-btn {
-            background: var(--bg); border: 2px solid var(--stone); color: var(--stone);
-            padding: 8px 20px; border-radius: 20px; font-size: 0.85rem; cursor: pointer;
-            font-weight: bold; transition: all 0.2s; display: inline-flex; align-items: center; gap: 8px;
-        }
-        .harvest-btn:hover { background: var(--stone); color: white; }
-        .harvest-btn:active { transform: scale(0.95); }
-
+        /* Sediment Style */
         .task-item.sediment {
-            background: #ecf0f1; border-left: 5px solid var(--stone);
-            border-radius: 6px; margin-bottom: 4px; padding: 12px 16px;
-            color: var(--stone-dark); transform: scale(0.98); box-shadow: none;
+            background: #ecf0f1; border-left: 5px solid var(--stone); border-radius: 6px; 
+            margin-bottom: 4px; padding: 12px 16px; color: var(--stone-dark); 
+            transform: scale(0.98); box-shadow: none;
         }
         .task-item.sediment .check-circle {
-            border-color: var(--stone); background: var(--stone);
-            width: 10px; height: 10px; margin-right: 15px; pointer-events: none;
+            border-color: var(--stone); background: var(--stone); width: 10px; height: 10px; 
+            margin-right: 15px; pointer-events: none;
         }
         .task-item.sediment .task-text { text-decoration: line-through; font-size: 0.95rem; }
 
-        /* --- Input Bar --- */
+        /* Harvest Button */
+        .harvest-btn {
+            background: var(--bg); border: 2px solid var(--stone); color: var(--stone);
+            padding: 8px 20px; border-radius: 20px; font-size: 0.85rem; cursor: pointer;
+            font-weight: bold; margin: 30px auto 20px auto; display: block;
+        }
+
+        /* --- Journal Styles (New) --- */
+        .journal-editor { background: white; padding: 20px; border-radius: 16px; box-shadow: 0 4px 15px rgba(0,0,0,0.03); margin-bottom: 30px; }
+        .mood-selector { display: flex; justify-content: space-between; margin-bottom: 15px; }
+        .mood-btn { 
+            font-size: 1.8rem; background: none; border: 2px solid transparent; cursor: pointer; 
+            border-radius: 50%; width: 50px; height: 50px; transition: all 0.2s; grayscale: 100%; opacity: 0.5;
+        }
+        .mood-btn.selected { transform: scale(1.2); opacity: 1; border-color: #eee; background: #fffdf0; }
+        
+        .journal-input {
+            width: 100%; border: 1px solid #eee; border-radius: 10px; padding: 15px; 
+            font-family: inherit; font-size: 1rem; margin-bottom: 15px; resize: none; background: #f9f9f9;
+        }
+        .journal-input:focus { outline: none; border-color: var(--primary); background: white; }
+        
+        .save-journal-btn {
+            width: 100%; background: var(--primary); color: white; border: none; padding: 12px; 
+            border-radius: 10px; font-weight: bold; cursor: pointer;
+        }
+
+        .journal-history { list-style: none; padding: 0; }
+        .journal-item {
+            background: white; padding: 15px; border-radius: 12px; margin-bottom: 10px;
+            border-left: 4px solid #eee;
+        }
+        .journal-meta { font-size: 0.8rem; color: #999; margin-bottom: 5px; display: flex; justify-content: space-between; }
+        .journal-content { font-size: 0.95rem; line-height: 1.5; white-space: pre-wrap; }
+
+        /* --- Bottom Nav --- */
+        .bottom-nav {
+            position: fixed; bottom: 0; left: 0; width: 100%; height: var(--nav-height);
+            background: rgba(255,255,255,0.95); backdrop-filter: blur(10px);
+            display: flex; justify-content: space-around; align-items: flex-start;
+            box-shadow: 0 -2px 10px rgba(0,0,0,0.05); z-index: 1000; padding-top: 10px;
+        }
+        .nav-item { flex: 1; text-align: center; color: #ccc; cursor: pointer; }
+        .nav-item i { display: block; font-size: 1.4rem; margin-bottom: 4px; }
+        .nav-item.active { color: var(--primary); }
+
+        /* --- Quick Add Bar --- */
         .input-wrapper {
-            position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%);
+            position: fixed; bottom: 80px; left: 50%; transform: translateX(-50%);
             width: 90%; max-width: 500px; 
             background: rgba(255,255,255,0.95); backdrop-filter: blur(10px);
             padding: 8px; border-radius: 50px;
@@ -113,76 +131,113 @@
             color: white; border: none; cursor: pointer; display: flex; justify-content: center; align-items: center;
         }
 
-        /* --- Animations --- */
-        @keyframes vanish { to { opacity: 0; transform: translateY(20px) scale(0.9); } }
-        @keyframes pop { 0% { transform: scale(1); } 50% { transform: scale(1.2); } 100% { transform: scale(1); } }
-        @keyframes floatUp { 0% { transform: translateY(0); opacity:1; } 100% { transform: translateY(-50px); opacity:0; } }
-
-        .particle {
-            position: absolute; color: var(--gold); font-size: 1.2rem;
-            animation: floatUp 1s ease-out forwards;
-        }
     </style>
 </head>
 <body>
 
     <div class="container">
         <header>
-            <div class="legacy-label">生涯累積基石</div>
-            <div class="legacy-count" id="total-count">0</div>
-            <div class="legacy-unit">Tasks Completed</div>
-            <div id="particle-zone" class="particle-container"></div>
+            <div class="header-stat">
+                <div class="legacy-label">生涯累積</div>
+                <div class="legacy-count" id="total-count">0</div>
+            </div>
+            <div style="font-size:0.8rem; color:#aaa; text-align:right;">
+                <div id="date-display">Today</div>
+            </div>
         </header>
 
-        <div class="section-header">
-            <span class="section-title">今日進行中</span>
-        </div>
-        <ul id="active-list" class="task-list"></ul>
+        <div id="tab-home" class="tab-content active">
+            <div class="section-header">
+                <span class="section-title">今日進行中</span>
+            </div>
+            <ul id="active-list" class="task-list"></ul>
 
-        <div class="divider-area" id="divider-area" style="display:none;">
-            <button class="harvest-btn" onclick="harvestTasks()">
-                <i class="fas fa-archive"></i> 封存並重新開始
-            </button>
+            <div id="divider-area" style="display:none;">
+                <button class="harvest-btn" onclick="harvestTasks()">
+                    <i class="fas fa-archive"></i> 封存並重新開始
+                </button>
+            </div>
+
+            <ul id="sediment-list" class="task-list"></ul>
+            
+            <div class="input-wrapper" id="quick-add-bar">
+                <input type="text" id="task-input" placeholder="新增任務..." enterkeyhint="done" onkeypress="handleKey(event)">
+                <button class="add-btn" onclick="addTask()"><i class="fas fa-plus"></i></button>
+            </div>
         </div>
 
-        <ul id="sediment-list" class="task-list"></ul>
-        
-        <div style="height: 80px;"></div>
+        <div id="tab-review" class="tab-content">
+            <div class="section-header"><span class="section-title">每日檢討</span></div>
+            
+            <div class="journal-editor">
+                <div class="mood-selector">
+                    <button class="mood-btn" onclick="selectMood('🔥')">🔥</button>
+                    <button class="mood-btn" onclick="selectMood('😊')">😊</button>
+                    <button class="mood-btn" onclick="selectMood('😐')">😐</button>
+                    <button class="mood-btn" onclick="selectMood('🌧️')">🌧️</button>
+                    <button class="mood-btn" onclick="selectMood('💀')">💀</button>
+                </div>
+                <textarea id="journal-text" rows="4" class="journal-input" placeholder="今天過得如何？寫下你的復盤..."></textarea>
+                <button onclick="saveJournal()" class="save-journal-btn">記錄今天</button>
+            </div>
+
+            <div class="section-header"><span class="section-title">歷史紀錄</span></div>
+            <ul id="journal-list" class="journal-history"></ul>
+        </div>
+
     </div>
 
-    <div class="input-wrapper">
-        <input type="text" id="task-input" placeholder="新增任務..." enterkeyhint="done" onkeypress="handleKey(event)">
-        <button class="add-btn" onclick="addTask()"><i class="fas fa-plus"></i></button>
-    </div>
+    <nav class="bottom-nav">
+        <div class="nav-item active" onclick="switchTab('home')">
+            <i class="fas fa-layer-group"></i> 行動
+        </div>
+        <div class="nav-item" onclick="switchTab('review')">
+            <i class="fas fa-book"></i> 檢討
+        </div>
+    </nav>
 
     <script>
-        /* --- Data State --- */
+        /* --- State --- */
         let tasks = JSON.parse(localStorage.getItem('legacy_tasks')) || [];
-        // 從 LocalStorage 讀取生涯總數，如果沒有則從 0 開始
         let lifetimeCount = parseInt(localStorage.getItem('legacy_lifetime_count')) || 0;
+        let journals = JSON.parse(localStorage.getItem('life_journals')) || [];
+        let currentMood = '';
 
         document.addEventListener('DOMContentLoaded', () => {
-            updateLifetimeDisplay();
+            document.getElementById('date-display').innerText = new Date().toLocaleDateString();
+            document.getElementById('total-count').innerText = lifetimeCount;
             renderLists();
+            renderJournals();
         });
 
-        /* --- Core Logic --- */
+        /* --- Tab Logic --- */
+        function switchTab(tabName) {
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+            document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+            
+            document.getElementById(`tab-${tabName}`).classList.add('active');
+            
+            // Highlight nav
+            const index = tabName === 'home' ? 0 : 1;
+            document.querySelectorAll('.nav-item')[index].classList.add('active');
+
+            // Toggle Quick Add Bar visibility
+            document.getElementById('quick-add-bar').style.display = tabName === 'home' ? 'flex' : 'none';
+        }
+
+        /* --- Task Logic (v3.4 Monument) --- */
         function renderLists() {
             const activeList = document.getElementById('active-list');
             const sedimentList = document.getElementById('sediment-list');
             const divider = document.getElementById('divider-area');
             
-            activeList.innerHTML = '';
-            sedimentList.innerHTML = '';
-
+            activeList.innerHTML = ''; sedimentList.innerHTML = '';
             let hasSediment = false;
 
-            // Sort: Active (Newest first), Completed (Newest first)
             tasks.sort((a, b) => b.timestamp - a.timestamp);
 
             tasks.forEach(task => {
                 const li = document.createElement('li');
-                
                 if (!task.completed) {
                     li.className = 'task-item';
                     li.innerHTML = `
@@ -194,115 +249,88 @@
                 } else {
                     hasSediment = true;
                     li.className = 'task-item sediment';
-                    li.id = `sediment-${task.id}`; // Add ID for animation
-                    li.innerHTML = `
-                        <div class="check-circle"></div>
-                        <div class="task-text">${task.text}</div>
-                    `;
+                    li.innerHTML = `<div class="check-circle"></div><div class="task-text">${task.text}</div>`;
                     sedimentList.appendChild(li);
                 }
             });
-
-            // 只有當有累積物時，才顯示「封存」按鈕
             divider.style.display = hasSediment ? 'block' : 'none';
         }
 
         function addTask() {
             const input = document.getElementById('task-input');
-            const text = input.value.trim();
-            if (text) {
-                tasks.unshift({
-                    id: Date.now().toString(36),
-                    text: text,
-                    completed: false,
-                    timestamp: Date.now()
-                });
-                saveTasks();
-                renderLists();
-                input.value = '';
-                if(navigator.vibrate) navigator.vibrate(20);
+            if (input.value.trim()) {
+                tasks.unshift({ id: Date.now().toString(36), text: input.value.trim(), completed: false, timestamp: Date.now() });
+                saveTasks(); renderLists(); input.value = '';
             }
         }
         function handleKey(e) { if(e.key==='Enter') addTask(); }
 
         function completeTask(id) {
             const task = tasks.find(t => t.id === id);
-            if (task) {
-                task.completed = true;
-                task.timestamp = Date.now();
-                saveTasks();
-                renderLists();
-                if(navigator.vibrate) navigator.vibrate(50);
-            }
+            if (task) { task.completed = true; task.timestamp = Date.now(); saveTasks(); renderLists(); if(navigator.vibrate) navigator.vibrate(30); }
         }
-        
-        function deleteTask(id) {
-            tasks = tasks.filter(t => t.id !== id);
-            saveTasks(); renderLists();
-        }
-
-        /* --- Harvest / Archive Logic (The Cleanse) --- */
-        function harvestTasks() {
-            const completedTasks = tasks.filter(t => t.completed);
-            if (completedTasks.length === 0) return;
-
-            if(confirm(`確定要封存這 ${completedTasks.length} 個已完成項目嗎？\n它們將會計入生涯總數，並從列表中清除。`)) {
-                
-                // 1. 播放消失動畫
-                const sedimentItems = document.querySelectorAll('.task-item.sediment');
-                sedimentItems.forEach((el, index) => {
-                    setTimeout(() => {
-                        el.style.animation = 'vanish 0.5s forwards';
-                    }, index * 50); // 階梯式消失
-                });
-
-                // 2. 等動畫跑一下，再更新數據
-                setTimeout(() => {
-                    const count = completedTasks.length;
-                    
-                    // 更新生涯總數
-                    lifetimeCount += count;
-                    localStorage.setItem('legacy_lifetime_count', lifetimeCount);
-                    
-                    // 從列表中移除已完成項目 (只保留未完成的)
-                    tasks = tasks.filter(t => !t.completed);
-                    saveTasks();
-                    
-                    // 更新 UI
-                    renderLists();
-                    updateLifetimeDisplay();
-                    triggerConfetti(count); // 慶祝特效
-
-                }, sedimentItems.length * 50 + 300);
-            }
-        }
-
-        function updateLifetimeDisplay() {
-            const display = document.getElementById('total-count');
-            display.innerText = lifetimeCount;
-            // 簡單的跳動效果
-            display.style.animation = 'none';
-            display.offsetHeight; /* trigger reflow */
-            display.style.animation = 'pop 0.3s';
-        }
-
-        function triggerConfetti(amount) {
-            const zone = document.getElementById('particle-zone');
-            // 產生一些向上飄的數字或粒子
-            const particle = document.createElement('div');
-            particle.className = 'particle';
-            particle.innerText = `+${amount}`;
-            particle.style.left = '50%';
-            particle.style.top = '50%';
-            particle.style.transform = 'translate(-50%, -50%)';
-            zone.appendChild(particle);
-            
-            setTimeout(() => particle.remove(), 1000);
-            
-            if(navigator.vibrate) navigator.vibrate([100,50,100]);
-        }
-
+        function deleteTask(id) { tasks = tasks.filter(t => t.id !== id); saveTasks(); renderLists(); }
         function saveTasks() { localStorage.setItem('legacy_tasks', JSON.stringify(tasks)); }
+
+        function harvestTasks() {
+            const completedCount = tasks.filter(t => t.completed).length;
+            if (completedCount > 0 && confirm(`封存這 ${completedCount} 個項目？`)) {
+                lifetimeCount += completedCount;
+                localStorage.setItem('legacy_lifetime_count', lifetimeCount);
+                document.getElementById('total-count').innerText = lifetimeCount;
+                
+                tasks = tasks.filter(t => !t.completed);
+                saveTasks(); renderLists();
+            }
+        }
+
+        /* --- Journal Logic (New) --- */
+        function selectMood(mood) {
+            currentMood = mood;
+            document.querySelectorAll('.mood-btn').forEach(btn => {
+                btn.classList.toggle('selected', btn.innerText === mood);
+            });
+        }
+
+        function saveJournal() {
+            const text = document.getElementById('journal-text').value.trim();
+            if (!currentMood && !text) { alert('請至少選擇心情或寫點東西！'); return; }
+
+            const entry = {
+                id: Date.now(),
+                date: new Date().toLocaleString(),
+                mood: currentMood || '📝',
+                text: text
+            };
+
+            journals.unshift(entry);
+            localStorage.setItem('life_journals', JSON.stringify(journals));
+            
+            // Reset Form
+            document.getElementById('journal-text').value = '';
+            selectMood('');
+            currentMood = '';
+            
+            renderJournals();
+            alert('日誌已儲存');
+        }
+
+        function renderJournals() {
+            const list = document.getElementById('journal-list');
+            list.innerHTML = '';
+            journals.forEach(j => {
+                const li = document.createElement('li');
+                li.className = 'journal-item';
+                li.innerHTML = `
+                    <div class="journal-meta">
+                        <span>${j.date}</span>
+                        <span style="font-size:1.2rem">${j.mood}</span>
+                    </div>
+                    <div class="journal-content">${j.text}</div>
+                `;
+                list.appendChild(li);
+            });
+        }
     </script>
 </body>
 </html>
