@@ -3,162 +3,124 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Life Quest Engine v2</title>
+    <title>Life Quest Legacy</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
         :root {
-            --primary: #4f2a93;
-            --accent: #ffbe5c;
-            --danger: #ff6b6b;
-            --success: #4caf50;
-            --bg: #f0f2f5;
-            --card-bg: #fff;
-            --text: #333;
-            --nav-base-height: 60px;
-            --safe-area-bottom: env(safe-area-inset-bottom, 0px);
-            --nav-height: calc(var(--nav-base-height) + var(--safe-area-bottom));
+            --primary: #2c3e50;
+            --accent: #d35400; 
+            --bg: #fdfbf7;
+            --stone: #95a5a6;
+            --stone-dark: #7f8c8d;
+            --gold: #f1c40f;
+            --nav-height: calc(60px + env(safe-area-inset-bottom, 0px));
         }
 
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
 
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
             background: var(--bg);
-            color: var(--text);
-            margin: 0;
-            padding: 0;
-            padding-bottom: calc(var(--nav-height) + 80px); 
+            color: #333;
+            margin: 0; padding: 0;
+            padding-bottom: calc(var(--nav-height) + 20px); 
             overscroll-behavior-y: none;
         }
 
-        .container {
-            max-width: 100%;
-            margin: 0 auto;
-            padding: 15px;
-            padding-top: 10px;
-        }
+        .container { max-width: 600px; margin: 0 auto; padding: 20px; }
 
-        /* --- Tablet & Desktop Tweaks --- */
-        @media (min-width: 768px) {
-            .container { max-width: 900px; }
-            .task-list { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
-            .task-item { margin-bottom: 0 !important; height: 100%; }
-            .bottom-nav {
-                width: 400px !important; left: 50% !important; transform: translateX(-50%);
-                bottom: 20px !important; border-radius: 50px;
-                box-shadow: 0 5px 20px rgba(0,0,0,0.15) !important; padding-bottom: 0 !important; height: 60px !important;
-            }
-            .quick-add-bar { width: 500px !important; bottom: 100px !important; }
-        }
-
-        /* --- Header --- */
+        /* --- Legacy Header (永久累積區) --- */
         header {
-            background: var(--card-bg);
-            padding: 15px;
-            border-radius: 16px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.06);
-            margin-bottom: 20px;
-            position: sticky; top: 10px; z-index: 90;
+            margin-bottom: 25px;
+            text-align: center;
+            background: white; padding: 20px; border-radius: 16px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.04);
+            position: relative; overflow: hidden;
         }
-        .header-top { display: flex; justify-content: space-between; align-items: center; }
-        .progress-bar { height: 12px; background: #eee; border-radius: 6px; overflow: hidden; margin-top: 12px; }
-        .progress-fill { height: 100%; background: var(--success); width: 0%; transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
+        
+        .legacy-label { font-size: 0.8rem; color: #999; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 5px; }
+        .legacy-count { font-size: 3rem; font-weight: 800; color: var(--primary); line-height: 1; }
+        .legacy-unit { font-size: 1rem; color: #bbb; font-weight: normal; }
 
-        /* --- Tabs --- */
-        .tab-content { display: none; animation: fadeIn 0.3s; }
-        .tab-content.active { display: block; }
-
-        /* --- Task Lists --- */
-        .section-title {
-            font-size: 0.95rem; color: #666; margin: 25px 0 10px 5px; font-weight: 600;
-            display: flex; justify-content: space-between; align-items: center;
+        /* 金幣雨動畫容器 */
+        .particle-container {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none;
         }
-        .task-list { list-style: none; padding: 0; margin: 0; }
+
+        /* --- Active Zone --- */
+        .section-header {
+            display: flex; justify-content: space-between; align-items: flex-end;
+            margin-bottom: 15px; padding: 0 5px;
+        }
+        .section-title { font-size: 0.9rem; color: #aaa; font-weight: bold; letter-spacing: 1px; }
+
+        .task-list { list-style: none; padding: 0; margin: 0; min-height: 50px;}
+        
         .task-item {
-            background: var(--card-bg); padding: 15px; margin-bottom: 10px; border-radius: 12px;
-            display: flex; align-items: center; box-shadow: 0 1px 3px rgba(0,0,0,0.05);
-            transition: transform 0.1s; border-left: 5px solid transparent; min-height: 60px;
+            background: white;
+            padding: 16px; margin-bottom: 12px; border-radius: 12px;
+            display: flex; align-items: center;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.03);
+            transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+            position: relative;
         }
-        .task-item:active { transform: scale(0.98); background: #f9f9f9; }
-        .task-item.long-term { border-left-color: var(--primary); }
-        .task-item.short-term { border-left-color: #aaa; }
-        .task-item.gacha-task { border-left-color: var(--accent); background: #fffbf0; }
-        .task-item.completed { opacity: 0.6; background: #f4f4f4; }
-        .task-item.completed .task-text { text-decoration: line-through; color: #999; }
-        .task-text { flex-grow: 1; margin-left: 12px; font-size: 1rem; line-height: 1.4; word-break: break-word; }
-        .task-tag { font-size: 0.75rem; padding: 3px 8px; background: #eee; border-radius: 6px; color: #555; margin-right: 6px; }
 
-        input[type="checkbox"] { width: 24px; height: 24px; border: 2px solid #ddd; border-radius: 50%; appearance: none; -webkit-appearance: none; flex-shrink: 0; position: relative;}
-        input[type="checkbox"]:checked { background: var(--success); border-color: var(--success); }
-        input[type="checkbox"]:checked::after { content: '✓'; color: white; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 14px; }
+        .check-circle {
+            width: 24px; height: 24px; border: 2px solid var(--accent); border-radius: 50%;
+            margin-right: 15px; cursor: pointer; flex-shrink: 0;
+            transition: background 0.2s;
+        }
+        .check-circle:active { background: var(--accent); }
+        .task-text { flex-grow: 1; font-size: 1.05rem; }
+
+        /* --- Sediment Zone (The Pile) --- */
+        .divider-area {
+            margin: 40px 0 20px 0; text-align: center; position: relative;
+        }
         
-        .delete-btn { padding: 10px; color: #ccc; margin-left: 5px; }
-
-        /* --- Gacha Page --- */
-        .gacha-container { text-align: center; padding: 20px 10px; }
-        .gacha-machine { font-size: 6rem; color: var(--primary); margin-bottom: 20px; animation: float 3s infinite ease-in-out; }
-        .gacha-btn {
-            background: var(--accent); color: #7a4e00; font-size: 1.2rem; padding: 15px 40px;
-            border-radius: 50px; border: none; box-shadow: 0 6px 0 #d49e3b; cursor: pointer; font-weight: 800;
-            width: 100%; max-width: 300px;
+        /* 淨化按鈕 (Harvest Button) */
+        .harvest-btn {
+            background: var(--bg); border: 2px solid var(--stone); color: var(--stone);
+            padding: 8px 20px; border-radius: 20px; font-size: 0.85rem; cursor: pointer;
+            font-weight: bold; transition: all 0.2s; display: inline-flex; align-items: center; gap: 8px;
         }
-        .gacha-btn:active { transform: translateY(6px); box-shadow: none; }
-        
-        .gacha-result-card {
-            border: 2px solid var(--accent); background: #fffdf5; padding: 25px; margin-top: 30px;
-            border-radius: 16px; display: none; animation: fadeIn 0.5s; text-align: left;
-        }
+        .harvest-btn:hover { background: var(--stone); color: white; }
+        .harvest-btn:active { transform: scale(0.95); }
 
-        /* --- Custom Pool UI --- */
-        .pool-list { list-style: none; padding: 0; text-align: left; margin-top: 10px;}
-        .pool-item { 
-            background: white; border-bottom: 1px solid #eee; padding: 12px; display: flex; 
-            justify-content: space-between; align-items: center; font-size: 0.9rem;
+        .task-item.sediment {
+            background: #ecf0f1; border-left: 5px solid var(--stone);
+            border-radius: 6px; margin-bottom: 4px; padding: 12px 16px;
+            color: var(--stone-dark); transform: scale(0.98); box-shadow: none;
         }
+        .task-item.sediment .check-circle {
+            border-color: var(--stone); background: var(--stone);
+            width: 10px; height: 10px; margin-right: 15px; pointer-events: none;
+        }
+        .task-item.sediment .task-text { text-decoration: line-through; font-size: 0.95rem; }
 
-        /* --- Bottom Nav --- */
-        .bottom-nav {
-            position: fixed; bottom: 0; left: 0; width: 100%; height: var(--nav-height);
+        /* --- Input Bar --- */
+        .input-wrapper {
+            position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%);
+            width: 90%; max-width: 500px; 
             background: rgba(255,255,255,0.95); backdrop-filter: blur(10px);
-            display: flex; justify-content: space-around; align-items: flex-start;
-            box-shadow: 0 -2px 10px rgba(0,0,0,0.05); z-index: 1000;
-            padding-bottom: var(--safe-area-bottom); border-top: 1px solid rgba(0,0,0,0.05);
+            padding: 8px; border-radius: 50px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.15);
+            display: flex; gap: 10px; z-index: 100;
         }
-        .nav-item { flex: 1; text-align: center; color: #aaa; padding-top: 10px; font-size: 0.75rem; }
-        .nav-item i { display: block; font-size: 1.5rem; margin-bottom: 4px; }
-        .nav-item.active { color: var(--primary); }
-
-        /* --- Quick Add Bar --- */
-        .quick-add-bar {
-            position: fixed; bottom: calc(var(--nav-height) + 15px); left: 50%; transform: translateX(-50%);
-            width: 92%; max-width: 500px; display: flex; gap: 10px;
-            background: rgba(255,255,255,0.95); padding: 10px; border-radius: 16px;
-            backdrop-filter: blur(8px); box-shadow: 0 8px 25px rgba(0,0,0,0.12); z-index: 99;
+        .input-wrapper input { flex: 1; border: none; background: transparent; padding: 12px 20px; font-size: 1rem; outline: none; }
+        .add-btn {
+            width: 45px; height: 45px; border-radius: 50%; background: var(--primary);
+            color: white; border: none; cursor: pointer; display: flex; justify-content: center; align-items: center;
         }
-        .quick-add-bar input { flex-grow: 1; padding: 12px 15px; border: 1px solid #eee; border-radius: 10px; background: #f9f9f9; outline: none; font-size: 16px; }
 
-        /* --- Settings & Modals --- */
-        .settings-list { list-style: none; padding: 0; }
-        .settings-item { background: white; padding: 18px; margin-bottom: 8px; border-radius: 10px; display: flex; justify-content: space-between; align-items: center; }
+        /* --- Animations --- */
+        @keyframes vanish { to { opacity: 0; transform: translateY(20px) scale(0.9); } }
+        @keyframes pop { 0% { transform: scale(1); } 50% { transform: scale(1.2); } 100% { transform: scale(1); } }
+        @keyframes floatUp { 0% { transform: translateY(0); opacity:1; } 100% { transform: translateY(-50px); opacity:0; } }
 
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-        @keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-10px); } }
-        @keyframes shake { 0% { transform: rotate(0deg); } 25% { transform: rotate(10deg); } 75% { transform: rotate(-10deg); } 100% { transform: rotate(0deg); } }
-        
-        .modal-overlay {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.85); display: none; justify-content: center; align-items: center; z-index: 2000; padding: 20px;
-        }
-        .modal { background: white; padding: 25px; border-radius: 20px; width: 100%; max-width: 360px; text-align: center; position: relative;}
-        .btn { padding: 10px 20px; border: none; border-radius: 8px; cursor: pointer; font-size: 1rem; font-weight: 600; }
-        .btn-danger { background: var(--danger); color: white; }
-        .btn-primary { background: var(--primary); color: white; }
-        .btn-outline { border: 1px solid #ccc; background: none; color: #666; }
-        
-        .close-modal-btn {
-            position: absolute; top: 10px; right: 10px; width: 30px; height: 30px;
-            background: #eee; border-radius: 50%; display: flex; align-items: center; justify-content: center;
-            cursor: pointer; color: #666; font-size: 1.2rem;
+        .particle {
+            position: absolute; color: var(--gold); font-size: 1.2rem;
+            animation: floatUp 1s ease-out forwards;
         }
     </style>
 </head>
@@ -166,335 +128,181 @@
 
     <div class="container">
         <header>
-            <div class="header-top">
-                <div style="font-weight: 800; color: var(--primary); font-size: 1.1rem;">
-                    <i class="fas fa-dragon"></i> Life Quest v2
-                </div>
-                <button onclick="startCooldown()" class="btn btn-danger" style="font-size: 0.8rem; padding: 6px 12px;">
-                    <i class="fas fa-fire"></i> 冷靜
-                </button>
-            </div>
-            <div class="progress-bar">
-                <div id="main-progress" class="progress-fill"></div>
-            </div>
-            <div style="text-align: right; font-size: 0.8rem; color: #888; margin-top: 8px;">
-                修煉進度: <span id="progress-text">0%</span>
-            </div>
+            <div class="legacy-label">生涯累積基石</div>
+            <div class="legacy-count" id="total-count">0</div>
+            <div class="legacy-unit">Tasks Completed</div>
+            <div id="particle-zone" class="particle-container"></div>
         </header>
 
-        <div id="tab-dashboard" class="tab-content active">
-            <div class="section-title">
-                <span><i class="fas fa-infinity" style="color:var(--primary)"></i> 長期修煉</span>
-                <small onclick="switchTab('settings')" style="cursor:pointer; color:var(--primary); background:rgba(79, 42, 147, 0.1); padding:4px 8px; border-radius:6px;">管理 ></small>
-            </div>
-            <ul id="long-term-list" class="task-list"></ul>
-            <div id="long-term-empty" style="text-align:center; color:#999; font-size:0.9rem; padding: 20px; background:rgba(255,255,255,0.5); border-radius:12px; display:none;">
-                尚無項目，請至設定頁新增
-            </div>
+        <div class="section-header">
+            <span class="section-title">今日進行中</span>
+        </div>
+        <ul id="active-list" class="task-list"></ul>
 
-            <div class="section-title" style="margin-top: 30px;">
-                <span><i class="fas fa-bolt" style="color:#f57c00"></i> 短期任務</span>
-            </div>
-            <ul id="short-term-list" class="task-list" style="margin-bottom: 80px;"></ul>
-            
-            <div class="quick-add-bar">
-                <input type="text" id="quick-input" placeholder="新增任務..." enterkeyhint="done" onkeypress="handleQuickAdd(event)">
-                <button onclick="addShortTermTask()" class="btn btn-primary" style="padding: 0 15px;"><i class="fas fa-arrow-up"></i></button>
-            </div>
+        <div class="divider-area" id="divider-area" style="display:none;">
+            <button class="harvest-btn" onclick="harvestTasks()">
+                <i class="fas fa-archive"></i> 封存並重新開始
+            </button>
         </div>
 
-        <div id="tab-gacha" class="tab-content">
-            <div class="gacha-container">
-                <h2 style="font-size:1.8rem; margin-top:0;">命運抽籤</h2>
-                <div id="gacha-icon" class="gacha-machine"><i class="fas fa-gift"></i></div>
-                <button onclick="playGacha()" class="gacha-btn">開始抽取</button>
-
-                <div id="gacha-result" class="gacha-result-card">
-                    <h3 id="gacha-title" style="color:var(--primary); margin-top:0;"></h3>
-                    <p id="gacha-desc" style="color:#444; margin:10px 0 20px 0;"></p>
-                    <button onclick="acceptGacha()" class="btn btn-primary" style="width:100%; margin-bottom:10px;">接受挑戰</button>
-                    <button onclick="closeGachaResult()" class="btn btn-outline" style="width:100%;">關閉</button>
-                </div>
-
-                <div style="margin-top: 50px; border-top: 2px dashed #ddd; padding-top: 20px;">
-                    <div class="section-title"><span><i class="fas fa-plus-circle"></i> 自訂挑戰池</span></div>
-                    <div style="background: white; padding: 15px; border-radius: 12px; text-align: left;">
-                        <input type="text" id="pool-title" placeholder="標題 (例: Habitica-整理書桌)" style="width:100%; padding:10px; margin-bottom:10px; border:1px solid #eee; border-radius:8px;">
-                        <input type="text" id="pool-desc" placeholder="描述 (例: 花15分鐘整理)" style="width:100%; padding:10px; margin-bottom:10px; border:1px solid #eee; border-radius:8px;">
-                        <button onclick="addToPool()" class="btn btn-primary" style="width:100%;">加入抽籤池</button>
-                    </div>
-                    
-                    <div style="margin-top:20px; text-align: left;">
-                        <div style="font-size:0.8rem; color:#999; margin-bottom:5px;">目前池中的挑戰：</div>
-                        <ul id="pool-display-list" class="pool-list"></ul>
-                        <button onclick="resetPool()" style="margin-top:10px; color:#999; background:none; border:none; text-decoration:underline;">重置回預設值</button>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <div id="tab-settings" class="tab-content">
-            <div class="section-title"><span>長期任務模板</span></div>
-            <div style="background: white; padding: 20px; border-radius: 12px; margin-bottom: 20px;">
-                <div style="display:flex; gap:10px;">
-                    <input type="text" id="setting-input" placeholder="輸入習慣..." style="flex:1; padding:12px; border:1px solid #eee; border-radius:8px; font-size:16px;">
-                    <button onclick="addSettingTemplate()" class="btn btn-primary">新增</button>
-                </div>
-            </div>
-            <ul id="settings-list" class="settings-list"></ul>
-            <div style="text-align: center; margin-top: 30px;">
-                <button onclick="deployLongTermTasks()" class="btn btn-primary" style="width: 100%; padding: 15px;">
-                    <i class="fas fa-sync-alt"></i> 全部部署到儀表板
-                </button>
-            </div>
-        </div>
+        <ul id="sediment-list" class="task-list"></ul>
+        
+        <div style="height: 80px;"></div>
     </div>
 
-    <nav class="bottom-nav">
-        <div class="nav-item active" onclick="switchTab('dashboard')"><i class="fas fa-list-ul"></i> 儀表板</div>
-        <div class="nav-item" onclick="switchTab('gacha')"><i class="fas fa-dice-d20"></i> 抽籤</div>
-        <div class="nav-item" onclick="switchTab('settings')"><i class="fas fa-cog"></i> 設定</div>
-    </nav>
-
-    <div id="cooldown-modal" class="modal-overlay">
-        <div class="modal">
-            <div class="close-modal-btn" onclick="stopCooldown(true)">&times;</div>
-            
-            <h2 style="color: var(--danger); font-size:2rem; margin-bottom:10px;">🔥 系統過熱</h2>
-            <p style="color:#666; margin-bottom:20px;">深呼吸，什麼都不用做。</p>
-            <div id="timer-display" style="font-size: 3.5rem; font-weight: 800; color:#333; margin: 20px 0;">03:00</div>
-            <textarea id="anger-log" placeholder="在此宣洩情緒 (不會保存)..." style="width: 100%; height: 100px; padding: 15px; border-radius:10px; border:1px solid #ddd;"></textarea>
-            <button onclick="stopCooldown(false)" id="stop-cooldown-btn" class="btn btn-outline" disabled style="width: 100%; margin-top:15px;">冷卻中...</button>
-        </div>
+    <div class="input-wrapper">
+        <input type="text" id="task-input" placeholder="新增任務..." enterkeyhint="done" onkeypress="handleKey(event)">
+        <button class="add-btn" onclick="addTask()"><i class="fas fa-plus"></i></button>
     </div>
 
     <script>
-        /* --- Data & State --- */
-        let tasks = JSON.parse(localStorage.getItem('myTasks')) || [];
-        let longTermTemplates = JSON.parse(localStorage.getItem('longTermTemplates')) || [
-            { text: "閱讀 30 分鐘", tag: "Learning" },
-            { text: "運動/伸展", tag: "Health" }
-        ];
-
-        // 修正 3: 將 Gacha Pool 改為可從 LocalStorage 讀取
-        const defaultPool = [
-            { title: "📵 數位排毒", desc: "接下來 1 小時不看手機社群軟體" },
-            { title: "💧 水之呼吸", desc: "立刻去喝 500cc 的水" },
-            { title: "🧘 冥想時刻", desc: "閉上眼睛，什麼都不做 2 分鐘" },
-            { title: "📝 寫下情緒", desc: "在筆記本寫下目前的一個焦慮，然後劃掉它" }
-        ];
-        let gachaPool = JSON.parse(localStorage.getItem('gachaPool')) || defaultPool;
-        let currentGachaResult = null;
+        /* --- Data State --- */
+        let tasks = JSON.parse(localStorage.getItem('legacy_tasks')) || [];
+        // 從 LocalStorage 讀取生涯總數，如果沒有則從 0 開始
+        let lifetimeCount = parseInt(localStorage.getItem('legacy_lifetime_count')) || 0;
 
         document.addEventListener('DOMContentLoaded', () => {
-            renderTasks();
-            renderSettingsList();
-            renderPoolList(); // 渲染自訂挑戰池清單
+            updateLifetimeDisplay();
+            renderLists();
         });
 
-        /* --- Tab Switching --- */
-        function switchTab(tabName) {
-            document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
-            document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
-            document.getElementById(`tab-${tabName}`).classList.add('active');
+        /* --- Core Logic --- */
+        function renderLists() {
+            const activeList = document.getElementById('active-list');
+            const sedimentList = document.getElementById('sediment-list');
+            const divider = document.getElementById('divider-area');
             
-            const tabs = ['dashboard', 'gacha', 'settings'];
-            document.querySelectorAll('.nav-item')[tabs.indexOf(tabName)].classList.add('active');
-            window.scrollTo(0, 0);
-        }
+            activeList.innerHTML = '';
+            sedimentList.innerHTML = '';
 
-        /* --- Core Task Logic --- */
-        function renderTasks() {
-            const longList = document.getElementById('long-term-list');
-            const shortList = document.getElementById('short-term-list');
-            longList.innerHTML = ''; shortList.innerHTML = '';
-            
-            let hasLongTerm = false;
-            let completed = tasks.filter(t => t.completed).length;
+            let hasSediment = false;
+
+            // Sort: Active (Newest first), Completed (Newest first)
+            tasks.sort((a, b) => b.timestamp - a.timestamp);
 
             tasks.forEach(task => {
                 const li = document.createElement('li');
-                li.className = `task-item ${task.type} ${task.completed ? 'completed' : ''}`;
-                li.innerHTML = `
-                    <input type="checkbox" ${task.completed ? 'checked' : ''} onchange="toggleTask('${task.id}')">
-                    <div class="task-text" onclick="toggleTask('${task.id}')">
-                        ${task.tag ? `<span class="task-tag">${task.tag}</span>` : ''}
-                        <span>${task.text}</span>
-                    </div>
-                    <div class="delete-btn" onclick="deleteTask('${task.id}')"><i class="fas fa-times"></i></div>
-                `;
-                if (task.type === 'long-term') { longList.appendChild(li); hasLongTerm = true; } 
-                else { shortList.appendChild(li); }
-            });
-
-            document.getElementById('long-term-empty').style.display = hasLongTerm ? 'none' : 'block';
-            const percent = tasks.length === 0 ? 0 : Math.round((completed / tasks.length) * 100);
-            document.getElementById('main-progress').style.width = `${percent}%`;
-            document.getElementById('progress-text').innerText = `${completed}/${tasks.length} (${percent}%)`;
-        }
-
-        function addTask(text, type, tag = "") {
-            tasks.push({ id: Date.now().toString(36), text, type, tag, completed: false });
-            saveTasks(); renderTasks();
-            if(navigator.vibrate) navigator.vibrate(50);
-        }
-
-        function handleQuickAdd(e) { if (e.key === 'Enter') { e.preventDefault(); addShortTermTask(); } }
-        function addShortTermTask() {
-            const input = document.getElementById('quick-input');
-            if (input.value.trim()) {
-                addTask(input.value.trim(), 'short-term', 'ToDo');
-                input.value = ''; input.blur(); switchTab('dashboard');
-            }
-        }
-
-        function toggleTask(id) {
-            const task = tasks.find(t => t.id === id);
-            if (task) { task.completed = !task.completed; saveTasks(); renderTasks(); }
-        }
-        function deleteTask(id) {
-            if (confirm('確定刪除？')) { tasks = tasks.filter(t => t.id !== id); saveTasks(); renderTasks(); }
-        }
-        function saveTasks() { localStorage.setItem('myTasks', JSON.stringify(tasks)); }
-
-        /* --- Settings Logic --- */
-        function renderSettingsList() {
-            const list = document.getElementById('settings-list'); list.innerHTML = '';
-            longTermTemplates.forEach((item, index) => {
-                list.innerHTML += `<li class="settings-item"><span>${item.text} <small>${item.tag}</small></span><button onclick="removeTemplate(${index})" class="btn btn-outline" style="color:#ff6b6b;"><i class="fas fa-trash"></i></button></li>`;
-            });
-        }
-        function addSettingTemplate() {
-            const input = document.getElementById('setting-input');
-            if (input.value.trim()) {
-                longTermTemplates.push({ text: input.value.trim(), tag: 'Routine' });
-                localStorage.setItem('longTermTemplates', JSON.stringify(longTermTemplates));
-                input.value = ''; renderSettingsList();
-            }
-        }
-        function removeTemplate(index) {
-            longTermTemplates.splice(index, 1);
-            localStorage.setItem('longTermTemplates', JSON.stringify(longTermTemplates));
-            renderSettingsList();
-        }
-        function deployLongTermTasks() {
-            if(confirm('部署所有習慣到今日列表？')) {
-                longTermTemplates.forEach(t => addTask(t.text, 'long-term', t.tag));
-                switchTab('dashboard');
-            }
-        }
-
-        /* --- Gacha Logic (Enhanced) --- */
-        function playGacha() {
-            const icon = document.getElementById('gacha-icon');
-            const resultCard = document.getElementById('gacha-result');
-            resultCard.style.display = 'none';
-            icon.style.animation = 'shake 0.5s infinite';
-            if(navigator.vibrate) navigator.vibrate(200);
-
-            setTimeout(() => {
-                icon.style.animation = 'float 3s infinite ease-in-out';
-                // 這裡就是隨機機制的核心：
-                const random = gachaPool[Math.floor(Math.random() * gachaPool.length)];
-                currentGachaResult = random;
                 
-                document.getElementById('gacha-title').innerText = random.title;
-                document.getElementById('gacha-desc').innerText = random.desc;
-                resultCard.style.display = 'block';
-                if(navigator.vibrate) navigator.vibrate([100, 50, 100]);
-            }, 800);
-        }
-
-        function acceptGacha() {
-            if (currentGachaResult) {
-                addTask(`${currentGachaResult.title}: ${currentGachaResult.desc}`, 'gacha-task', 'Challenge');
-                switchTab('dashboard');
-                closeGachaResult();
-            }
-        }
-        function closeGachaResult() { document.getElementById('gacha-result').style.display = 'none'; }
-
-        // --- 新增功能：自訂挑戰池邏輯 ---
-        function renderPoolList() {
-            const list = document.getElementById('pool-display-list');
-            list.innerHTML = '';
-            gachaPool.forEach((item, index) => {
-                list.innerHTML += `
-                <li class="pool-item">
-                    <div><b>${item.title}</b><br><small style="color:#777">${item.desc}</small></div>
-                    <i class="fas fa-trash" onclick="removeFromPool(${index})" style="color:#ddd; padding:5px; cursor:pointer;"></i>
-                </li>`;
-            });
-        }
-
-        function addToPool() {
-            const title = document.getElementById('pool-title');
-            const desc = document.getElementById('pool-desc');
-            if(title.value.trim()) {
-                gachaPool.push({ title: title.value.trim(), desc: desc.value.trim() || '自訂挑戰' });
-                localStorage.setItem('gachaPool', JSON.stringify(gachaPool));
-                title.value = ''; desc.value = '';
-                renderPoolList();
-                alert('已加入抽籤池！');
-            }
-        }
-
-        function removeFromPool(index) {
-            if(confirm('從池中移除此挑戰？')) {
-                gachaPool.splice(index, 1);
-                if(gachaPool.length === 0) gachaPool = defaultPool; // 避免空池
-                localStorage.setItem('gachaPool', JSON.stringify(gachaPool));
-                renderPoolList();
-            }
-        }
-
-        function resetPool() {
-            if(confirm('重置為系統預設挑戰？')) {
-                gachaPool = JSON.parse(JSON.stringify(defaultPool)); // Deep copy
-                localStorage.setItem('gachaPool', JSON.stringify(gachaPool));
-                renderPoolList();
-            }
-        }
-
-        /* --- Cooldown Logic (Fixed) --- */
-        let cooldownTimer = null;
-        function startCooldown() {
-            const modal = document.getElementById('cooldown-modal');
-            const btn = document.getElementById('stop-cooldown-btn');
-            modal.style.display = 'flex';
-            
-            let timeLeft = 180; 
-            updateTimerDisplay(timeLeft);
-            
-            btn.disabled = true;
-            btn.innerText = "冷卻中...";
-            
-            if(cooldownTimer) clearInterval(cooldownTimer);
-            cooldownTimer = setInterval(() => {
-                timeLeft--;
-                updateTimerDisplay(timeLeft);
-                if (timeLeft <= 0) {
-                    clearInterval(cooldownTimer);
-                    btn.disabled = false;
-                    btn.innerText = "完成冷卻 (離開)";
-                    if(navigator.vibrate) navigator.vibrate([500, 200, 500]);
+                if (!task.completed) {
+                    li.className = 'task-item';
+                    li.innerHTML = `
+                        <div class="check-circle" onclick="completeTask('${task.id}')"></div>
+                        <div class="task-text">${task.text}</div>
+                        <i class="fas fa-times" onclick="deleteTask('${task.id}')" style="color:#eee; padding:10px;"></i>
+                    `;
+                    activeList.appendChild(li);
+                } else {
+                    hasSediment = true;
+                    li.className = 'task-item sediment';
+                    li.id = `sediment-${task.id}`; // Add ID for animation
+                    li.innerHTML = `
+                        <div class="check-circle"></div>
+                        <div class="task-text">${task.text}</div>
+                    `;
+                    sedimentList.appendChild(li);
                 }
-            }, 1000);
+            });
+
+            // 只有當有累積物時，才顯示「封存」按鈕
+            divider.style.display = hasSediment ? 'block' : 'none';
         }
 
-        function updateTimerDisplay(seconds) {
-            const m = Math.floor(seconds / 60).toString().padStart(2, '0');
-            const s = (seconds % 60).toString().padStart(2, '0');
-            document.getElementById('timer-display').innerText = `${m}:${s}`;
-        }
-
-        function stopCooldown(force = false) {
-            if (force || !document.getElementById('stop-cooldown-btn').disabled) {
-                document.getElementById('cooldown-modal').style.display = 'none';
-                clearInterval(cooldownTimer);
-                document.getElementById('anger-log').value = '';
+        function addTask() {
+            const input = document.getElementById('task-input');
+            const text = input.value.trim();
+            if (text) {
+                tasks.unshift({
+                    id: Date.now().toString(36),
+                    text: text,
+                    completed: false,
+                    timestamp: Date.now()
+                });
+                saveTasks();
+                renderLists();
+                input.value = '';
+                if(navigator.vibrate) navigator.vibrate(20);
             }
         }
+        function handleKey(e) { if(e.key==='Enter') addTask(); }
+
+        function completeTask(id) {
+            const task = tasks.find(t => t.id === id);
+            if (task) {
+                task.completed = true;
+                task.timestamp = Date.now();
+                saveTasks();
+                renderLists();
+                if(navigator.vibrate) navigator.vibrate(50);
+            }
+        }
+        
+        function deleteTask(id) {
+            tasks = tasks.filter(t => t.id !== id);
+            saveTasks(); renderLists();
+        }
+
+        /* --- Harvest / Archive Logic (The Cleanse) --- */
+        function harvestTasks() {
+            const completedTasks = tasks.filter(t => t.completed);
+            if (completedTasks.length === 0) return;
+
+            if(confirm(`確定要封存這 ${completedTasks.length} 個已完成項目嗎？\n它們將會計入生涯總數，並從列表中清除。`)) {
+                
+                // 1. 播放消失動畫
+                const sedimentItems = document.querySelectorAll('.task-item.sediment');
+                sedimentItems.forEach((el, index) => {
+                    setTimeout(() => {
+                        el.style.animation = 'vanish 0.5s forwards';
+                    }, index * 50); // 階梯式消失
+                });
+
+                // 2. 等動畫跑一下，再更新數據
+                setTimeout(() => {
+                    const count = completedTasks.length;
+                    
+                    // 更新生涯總數
+                    lifetimeCount += count;
+                    localStorage.setItem('legacy_lifetime_count', lifetimeCount);
+                    
+                    // 從列表中移除已完成項目 (只保留未完成的)
+                    tasks = tasks.filter(t => !t.completed);
+                    saveTasks();
+                    
+                    // 更新 UI
+                    renderLists();
+                    updateLifetimeDisplay();
+                    triggerConfetti(count); // 慶祝特效
+
+                }, sedimentItems.length * 50 + 300);
+            }
+        }
+
+        function updateLifetimeDisplay() {
+            const display = document.getElementById('total-count');
+            display.innerText = lifetimeCount;
+            // 簡單的跳動效果
+            display.style.animation = 'none';
+            display.offsetHeight; /* trigger reflow */
+            display.style.animation = 'pop 0.3s';
+        }
+
+        function triggerConfetti(amount) {
+            const zone = document.getElementById('particle-zone');
+            // 產生一些向上飄的數字或粒子
+            const particle = document.createElement('div');
+            particle.className = 'particle';
+            particle.innerText = `+${amount}`;
+            particle.style.left = '50%';
+            particle.style.top = '50%';
+            particle.style.transform = 'translate(-50%, -50%)';
+            zone.appendChild(particle);
+            
+            setTimeout(() => particle.remove(), 1000);
+            
+            if(navigator.vibrate) navigator.vibrate([100,50,100]);
+        }
+
+        function saveTasks() { localStorage.setItem('legacy_tasks', JSON.stringify(tasks)); }
     </script>
 </body>
 </html>
