@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Life Quest Journal</title>
+    <title>Life Quest v3.6</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
         :root {
@@ -12,8 +12,9 @@
             --bg: #fdfbf7;
             --stone: #95a5a6;
             --stone-dark: #7f8c8d;
-            --gold: #f1c40f;
             --nav-height: calc(60px + env(safe-area-inset-bottom, 0px));
+            --success: #27ae60;
+            --danger: #c0392b;
         }
 
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
@@ -27,83 +28,97 @@
             overscroll-behavior-y: none;
         }
 
-        .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+        .container { max-width: 600px; margin: 0 auto; padding: 15px; }
 
-        /* --- Header (Global) --- */
+        /* --- Header: Legacy & Cooldown --- */
         header {
-            margin-bottom: 20px; text-align: center; background: white; padding: 15px; border-radius: 16px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.03); display: flex; justify-content: space-between; align-items: center;
+            background: white; padding: 15px 20px; border-radius: 16px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.03); margin-bottom: 20px;
+            display: flex; justify-content: space-between; align-items: center;
         }
-        .header-stat { text-align: left; }
-        .legacy-label { font-size: 0.7rem; color: #999; text-transform: uppercase; letter-spacing: 1px; }
-        .legacy-count { font-size: 1.5rem; font-weight: 800; color: var(--primary); }
+        .legacy-box { text-align: left; }
+        .legacy-label { font-size: 0.75rem; color: #999; text-transform: uppercase; letter-spacing: 1px; }
+        .legacy-count { font-size: 1.8rem; font-weight: 800; color: var(--primary); line-height: 1.2; }
+        
+        .cooldown-btn {
+            width: 40px; height: 40px; border-radius: 50%; background: #ffebee; color: var(--danger);
+            border: none; cursor: pointer; display: flex; align-items: center; justify-content: center;
+            font-size: 1.2rem; transition: transform 0.2s;
+        }
+        .cooldown-btn:active { transform: scale(0.9); }
 
-        /* --- Tabs Logic --- */
+        /* --- Tab Content --- */
         .tab-content { display: none; animation: fadeIn 0.3s ease; }
         .tab-content.active { display: block; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
 
-        /* --- Task List Styles (From v3.4) --- */
-        .section-header { display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 15px; padding: 0 5px; }
-        .section-title { font-size: 0.9rem; color: #aaa; font-weight: bold; letter-spacing: 1px; }
-        .task-list { list-style: none; padding: 0; margin: 0; min-height: 50px;}
+        /* --- Task Lists (Active & Sediment) --- */
+        .section-title { font-size: 0.9rem; color: #aaa; font-weight: bold; margin: 15px 0 10px 0; }
+        .task-list { list-style: none; padding: 0; margin: 0; }
+        
         .task-item {
-            background: white; padding: 16px; margin-bottom: 12px; border-radius: 12px;
-            display: flex; align-items: center; box-shadow: 0 4px 15px rgba(0,0,0,0.03);
-            transition: all 0.3s; position: relative;
+            background: white; padding: 15px; margin-bottom: 10px; border-radius: 12px;
+            display: flex; align-items: flex-start; box-shadow: 0 2px 8px rgba(0,0,0,0.02);
+            transition: all 0.2s; position: relative;
         }
         .check-circle {
             width: 24px; height: 24px; border: 2px solid var(--accent); border-radius: 50%;
-            margin-right: 15px; cursor: pointer; flex-shrink: 0; transition: background 0.2s;
+            margin-right: 12px; cursor: pointer; flex-shrink: 0; margin-top: 2px;
         }
-        .task-text { flex-grow: 1; font-size: 1.05rem; }
         
-        /* Sediment Style */
+        .task-content { flex-grow: 1; min-width: 0; }
+        .task-title { font-size: 1rem; font-weight: 500; color: #333; margin-bottom: 2px; }
+        .task-desc { font-size: 0.85rem; color: #888; white-space: pre-wrap; display: none; margin-top: 5px; padding-top: 5px; border-top: 1px dashed #eee;}
+        .task-item.expanded .task-desc { display: block; }
+        
+        .expand-btn { color: #ccc; padding: 5px; cursor: pointer; font-size: 0.8rem; margin-left: 5px; }
+
+        /* Sediment (Completed) */
         .task-item.sediment {
             background: #ecf0f1; border-left: 5px solid var(--stone); border-radius: 6px; 
-            margin-bottom: 4px; padding: 12px 16px; color: var(--stone-dark); 
-            transform: scale(0.98); box-shadow: none;
+            margin-bottom: 4px; padding: 10px 15px; color: var(--stone-dark); transform: scale(0.98); box-shadow: none;
         }
-        .task-item.sediment .check-circle {
-            border-color: var(--stone); background: var(--stone); width: 10px; height: 10px; 
-            margin-right: 15px; pointer-events: none;
-        }
-        .task-item.sediment .task-text { text-decoration: line-through; font-size: 0.95rem; }
+        .task-item.sediment .check-circle { border-color: var(--stone); background: var(--stone); width: 12px; height: 12px; margin-right: 15px; pointer-events: none; }
+        .task-item.sediment .task-title { text-decoration: line-through; font-size: 0.9rem; color: #7f8c8d; }
+        .task-item.sediment .task-desc { display: none !important; }
 
         /* Harvest Button */
+        .harvest-container { text-align: center; margin: 20px 0; display: none; }
         .harvest-btn {
-            background: var(--bg); border: 2px solid var(--stone); color: var(--stone);
-            padding: 8px 20px; border-radius: 20px; font-size: 0.85rem; cursor: pointer;
-            font-weight: bold; margin: 30px auto 20px auto; display: block;
+            background: var(--primary); color: white; border: none; padding: 10px 25px; border-radius: 30px;
+            font-size: 0.9rem; cursor: pointer; box-shadow: 0 4px 10px rgba(44, 62, 80, 0.3);
+            display: inline-flex; align-items: center; gap: 8px;
         }
 
-        /* --- Journal Styles (New) --- */
-        .journal-editor { background: white; padding: 20px; border-radius: 16px; box-shadow: 0 4px 15px rgba(0,0,0,0.03); margin-bottom: 30px; }
-        .mood-selector { display: flex; justify-content: space-between; margin-bottom: 15px; }
-        .mood-btn { 
-            font-size: 1.8rem; background: none; border: 2px solid transparent; cursor: pointer; 
-            border-radius: 50%; width: 50px; height: 50px; transition: all 0.2s; grayscale: 100%; opacity: 0.5;
-        }
-        .mood-btn.selected { transform: scale(1.2); opacity: 1; border-color: #eee; background: #fffdf0; }
-        
-        .journal-input {
-            width: 100%; border: 1px solid #eee; border-radius: 10px; padding: 15px; 
-            font-family: inherit; font-size: 1rem; margin-bottom: 15px; resize: none; background: #f9f9f9;
-        }
-        .journal-input:focus { outline: none; border-color: var(--primary); background: white; }
-        
-        .save-journal-btn {
-            width: 100%; background: var(--primary); color: white; border: none; padding: 12px; 
-            border-radius: 10px; font-weight: bold; cursor: pointer;
+        /* --- Floating Action Button (Add Task) --- */
+        .fab {
+            position: fixed; bottom: 90px; right: 20px;
+            width: 56px; height: 56px; background: var(--accent); border-radius: 50%;
+            color: white; display: flex; justify-content: center; align-items: center;
+            font-size: 1.5rem; box-shadow: 0 4px 15px rgba(211, 84, 0, 0.4); cursor: pointer; z-index: 100;
         }
 
-        .journal-history { list-style: none; padding: 0; }
-        .journal-item {
-            background: white; padding: 15px; border-radius: 12px; margin-bottom: 10px;
-            border-left: 4px solid #eee;
-        }
-        .journal-meta { font-size: 0.8rem; color: #999; margin-bottom: 5px; display: flex; justify-content: space-between; }
-        .journal-content { font-size: 0.95rem; line-height: 1.5; white-space: pre-wrap; }
+        /* --- Gacha Styles --- */
+        .gacha-container { text-align: center; padding: 30px 10px; }
+        .gacha-machine { font-size: 5rem; color: var(--primary); margin-bottom: 20px; }
+        .gacha-result-card { background: white; padding: 20px; border-radius: 12px; border: 2px solid var(--accent); display: none; margin-top: 20px; text-align: left;}
+        .pool-list { list-style: none; padding: 0; text-align: left; margin-top: 10px; }
+        .pool-item { background: white; padding: 10px; border-bottom: 1px solid #eee; display: flex; justify-content: space-between; }
+
+        /* --- Journal Styles --- */
+        .journal-form { background: white; padding: 20px; border-radius: 16px; margin-bottom: 20px; }
+        .mood-selector { display: flex; justify-content: space-around; margin-bottom: 20px; }
+        .mood-btn { font-size: 1.5rem; background: none; border: 2px solid transparent; border-radius: 50%; cursor: pointer; opacity: 0.5; transition: 0.2s; }
+        .mood-btn.selected { opacity: 1; transform: scale(1.2); border-color: #eee; background: #fffdf0; }
+        
+        .review-question { margin-bottom: 15px; }
+        .review-label { font-size: 0.9rem; font-weight: bold; color: #555; margin-bottom: 5px; display: block; }
+        .review-input { width: 100%; padding: 10px; border: 1px solid #eee; border-radius: 8px; background: #f9f9f9; }
+        
+        .journal-history-item { background: white; padding: 15px; border-radius: 12px; margin-bottom: 10px; border-left: 4px solid #eee; }
+
+        /* --- Settings Styles --- */
+        .settings-item { background: white; padding: 15px; border-radius: 8px; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center;}
 
         /* --- Bottom Nav --- */
         .bottom-nav {
@@ -112,102 +127,176 @@
             display: flex; justify-content: space-around; align-items: flex-start;
             box-shadow: 0 -2px 10px rgba(0,0,0,0.05); z-index: 1000; padding-top: 10px;
         }
-        .nav-item { flex: 1; text-align: center; color: #ccc; cursor: pointer; }
+        .nav-item { flex: 1; text-align: center; color: #ccc; cursor: pointer; font-size: 0.75rem; }
         .nav-item i { display: block; font-size: 1.4rem; margin-bottom: 4px; }
         .nav-item.active { color: var(--primary); }
 
-        /* --- Quick Add Bar --- */
-        .input-wrapper {
-            position: fixed; bottom: 80px; left: 50%; transform: translateX(-50%);
-            width: 90%; max-width: 500px; 
-            background: rgba(255,255,255,0.95); backdrop-filter: blur(10px);
-            padding: 8px; border-radius: 50px;
-            box-shadow: 0 10px 40px rgba(0,0,0,0.15);
-            display: flex; gap: 10px; z-index: 100;
+        /* --- Modals --- */
+        .modal-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.5); display: none; justify-content: center; align-items: center; z-index: 2000;
         }
-        .input-wrapper input { flex: 1; border: none; background: transparent; padding: 12px 20px; font-size: 1rem; outline: none; }
-        .add-btn {
-            width: 45px; height: 45px; border-radius: 50%; background: var(--primary);
-            color: white; border: none; cursor: pointer; display: flex; justify-content: center; align-items: center;
-        }
+        .modal { background: white; width: 90%; max-width: 400px; padding: 20px; border-radius: 16px; position: relative; }
+        .modal h3 { margin-top: 0; color: var(--primary); }
+        .modal-input { width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 8px; margin-bottom: 10px; font-size: 1rem; }
+        .modal-textarea { height: 100px; resize: none; }
+        .modal-btn { width: 100%; padding: 12px; background: var(--primary); color: white; border: none; border-radius: 8px; cursor: pointer; font-size: 1rem; }
+        .close-modal { position: absolute; top: 15px; right: 15px; cursor: pointer; font-size: 1.2rem; color: #999; }
 
+        /* Cooldown specific */
+        .cooldown-timer { font-size: 3rem; font-weight: bold; text-align: center; margin: 20px 0; }
+        
+        /* Animation */
+        @keyframes pop { 0% { transform: scale(1); } 50% { transform: scale(1.3); } 100% { transform: scale(1); } }
     </style>
 </head>
 <body>
 
     <div class="container">
         <header>
-            <div class="header-stat">
-                <div class="legacy-label">生涯累積</div>
+            <div class="legacy-box">
+                <div class="legacy-label">生涯累積 (Legacy)</div>
                 <div class="legacy-count" id="total-count">0</div>
             </div>
-            <div style="font-size:0.8rem; color:#aaa; text-align:right;">
-                <div id="date-display">Today</div>
-            </div>
+            <button class="cooldown-btn" onclick="openCooldown()" title="冷靜模式">
+                <i class="fas fa-fire"></i>
+            </button>
         </header>
 
         <div id="tab-home" class="tab-content active">
-            <div class="section-header">
-                <span class="section-title">今日進行中</span>
-            </div>
+            <div class="section-title">今日任務 (Active)</div>
             <ul id="active-list" class="task-list"></ul>
-
-            <div id="divider-area" style="display:none;">
+            
+            <div class="harvest-container" id="harvest-area">
                 <button class="harvest-btn" onclick="harvestTasks()">
-                    <i class="fas fa-archive"></i> 封存並重新開始
+                    <i class="fas fa-archive"></i> 封存並累積點數
                 </button>
             </div>
 
+            <div class="section-title">已完成堆疊 (Sediment)</div>
             <ul id="sediment-list" class="task-list"></ul>
             
-            <div class="input-wrapper" id="quick-add-bar">
-                <input type="text" id="task-input" placeholder="新增任務..." enterkeyhint="done" onkeypress="handleKey(event)">
-                <button class="add-btn" onclick="addTask()"><i class="fas fa-plus"></i></button>
-            </div>
+            <div class="fab" onclick="openTaskModal()"><i class="fas fa-plus"></i></div>
         </div>
 
-        <div id="tab-review" class="tab-content">
-            <div class="section-header"><span class="section-title">每日檢討</span></div>
-            
-            <div class="journal-editor">
-                <div class="mood-selector">
-                    <button class="mood-btn" onclick="selectMood('🔥')">🔥</button>
-                    <button class="mood-btn" onclick="selectMood('😊')">😊</button>
-                    <button class="mood-btn" onclick="selectMood('😐')">😐</button>
-                    <button class="mood-btn" onclick="selectMood('🌧️')">🌧️</button>
-                    <button class="mood-btn" onclick="selectMood('💀')">💀</button>
+        <div id="tab-gacha" class="tab-content">
+            <div class="gacha-container">
+                <div id="gacha-icon" class="gacha-machine"><i class="fas fa-dice-d20"></i></div>
+                <button onclick="playGacha()" class="harvest-btn" style="background:var(--accent)">命運抽籤</button>
+                
+                <div id="gacha-result" class="gacha-result-card">
+                    <h3 id="gacha-title" style="margin-top:0; color:var(--primary)"></h3>
+                    <p id="gacha-desc" style="color:#666"></p>
+                    <button onclick="acceptGacha()" class="modal-btn" style="background:var(--accent)">接受挑戰</button>
                 </div>
-                <textarea id="journal-text" rows="4" class="journal-input" placeholder="今天過得如何？寫下你的復盤..."></textarea>
-                <button onclick="saveJournal()" class="save-journal-btn">記錄今天</button>
             </div>
+            <div class="section-title" style="padding:0 10px;">抽籤池設定</div>
+            <div style="padding: 10px; background: white; border-radius: 12px; margin: 0 10px;">
+                <input id="pool-new-title" placeholder="挑戰標題" class="modal-input" style="margin-bottom:5px;">
+                <input id="pool-new-desc" placeholder="挑戰描述" class="modal-input">
+                <button onclick="addToPool()" class="modal-btn" style="padding:8px; font-size:0.9rem;">加入池中</button>
+            </div>
+            <ul id="pool-list" class="pool-list" style="margin: 10px;"></ul>
+        </div>
 
-            <div class="section-header"><span class="section-title">歷史紀錄</span></div>
-            <ul id="journal-list" class="journal-history"></ul>
+        <div id="tab-journal" class="tab-content">
+            <div class="journal-form">
+                <h3>每日檢討</h3>
+                <div class="mood-selector">
+                    <button class="mood-btn" onclick="selectMood('🤩')">🤩</button>
+                    <button class="mood-btn" onclick="selectMood('🙂')">🙂</button>
+                    <button class="mood-btn" onclick="selectMood('😐')">😐</button>
+                    <button class="mood-btn" onclick="selectMood('😫')">😫</button>
+                    <button class="mood-btn" onclick="selectMood('😡')">😡</button>
+                </div>
+                
+                <div id="dynamic-questions-area">
+                    </div>
+
+                <div class="review-question">
+                    <span class="review-label">自由筆記</span>
+                    <textarea id="journal-free-text" class="modal-input modal-textarea" placeholder="其他想說的..."></textarea>
+                </div>
+                <button onclick="saveJournal()" class="modal-btn">記錄今天</button>
+            </div>
+            
+            <div class="section-title">歷史日誌</div>
+            <ul id="journal-history" style="list-style:none; padding:0;"></ul>
+        </div>
+
+        <div id="tab-settings" class="tab-content">
+            <div class="section-title">設定檢討問題</div>
+            <div style="background: white; padding: 15px; border-radius: 12px;">
+                <p style="font-size:0.8rem; color:#888; margin-top:0;">新增問題將顯示在「日誌」頁面中。</p>
+                <div style="display:flex; gap:10px;">
+                    <input id="new-question-input" class="modal-input" placeholder="例如：今天有運動嗎？" style="margin-bottom:0;">
+                    <button onclick="addQuestionTemplate()" class="modal-btn" style="width:auto;">新增</button>
+                </div>
+            </div>
+            <ul id="questions-list" style="list-style:none; padding:0; margin-top:10px;"></ul>
+            
+            <div class="section-title" style="margin-top:30px;">資料管理</div>
+            <button onclick="resetAllData()" class="modal-btn" style="background:var(--stone); margin-bottom:10px;">重置所有資料</button>
         </div>
 
     </div>
 
     <nav class="bottom-nav">
-        <div class="nav-item active" onclick="switchTab('home')">
-            <i class="fas fa-layer-group"></i> 行動
-        </div>
-        <div class="nav-item" onclick="switchTab('review')">
-            <i class="fas fa-book"></i> 檢討
-        </div>
+        <div class="nav-item active" onclick="switchTab('home')"><i class="fas fa-tasks"></i>任務</div>
+        <div class="nav-item" onclick="switchTab('gacha')"><i class="fas fa-dice"></i>抽籤</div>
+        <div class="nav-item" onclick="switchTab('journal')"><i class="fas fa-book"></i>日誌</div>
+        <div class="nav-item" onclick="switchTab('settings')"><i class="fas fa-cog"></i>設定</div>
     </nav>
 
+    <div id="task-modal" class="modal-overlay">
+        <div class="modal">
+            <span class="close-modal" onclick="closeTaskModal()">&times;</span>
+            <h3>新增任務</h3>
+            <input type="text" id="modal-task-title" class="modal-input" placeholder="標題 (必填)">
+            <textarea id="modal-task-desc" class="modal-input modal-textarea" placeholder="詳細內容 (選填)"></textarea>
+            <button onclick="saveTaskFromModal()" class="modal-btn">新增</button>
+        </div>
+    </div>
+
+    <div id="cooldown-modal" class="modal-overlay">
+        <div class="modal" style="text-align:center;">
+            <h3>🔥 冷靜模式</h3>
+            <div class="cooldown-timer" id="timer-display">03:00</div>
+            <textarea class="modal-input modal-textarea" placeholder="在這裡宣洩情緒 (不會儲存)..." id="anger-input"></textarea>
+            <button id="stop-cooldown-btn" class="modal-btn" style="background:#ccc" disabled onclick="stopCooldown()">計時中...</button>
+            <div style="margin-top:10px; font-size:0.8rem; color:#888; cursor:pointer; text-decoration:underline;" onclick="closeCooldown()">放棄並關閉</div>
+        </div>
+    </div>
+
     <script>
-        /* --- State --- */
-        let tasks = JSON.parse(localStorage.getItem('legacy_tasks')) || [];
-        let lifetimeCount = parseInt(localStorage.getItem('legacy_lifetime_count')) || 0;
-        let journals = JSON.parse(localStorage.getItem('life_journals')) || [];
+        /* --- Data Management --- */
+        let tasks = JSON.parse(localStorage.getItem('v36_tasks')) || [];
+        let legacyCount = parseInt(localStorage.getItem('v36_legacy_count')) || 0;
+        let journals = JSON.parse(localStorage.getItem('v36_journals')) || [];
+        
+        // Default Gacha Pool
+        let gachaPool = JSON.parse(localStorage.getItem('v36_pool')) || [
+            {title: "整理環境", desc: "整理桌面或房間的一角"},
+            {title: "喝水", desc: "喝一杯溫開水"},
+            {title: "斷網", desc: "手機開飛航模式 30 分鐘"}
+        ];
+
+        // Review Questions Templates
+        let reviewQuestions = JSON.parse(localStorage.getItem('v36_questions')) || [
+            "今天最棒的一件事是什麼？",
+            "有什麼可以改進的地方？"
+        ];
+
         let currentMood = '';
 
+        /* --- Init --- */
         document.addEventListener('DOMContentLoaded', () => {
-            document.getElementById('date-display').innerText = new Date().toLocaleDateString();
-            document.getElementById('total-count').innerText = lifetimeCount;
-            renderLists();
-            renderJournals();
+            updateLegacyDisplay();
+            renderTasks();
+            renderPool();
+            renderQuestionSettings();
+            renderJournalQuestions();
+            renderJournalHistory();
         });
 
         /* --- Tab Logic --- */
@@ -217,120 +306,242 @@
             
             document.getElementById(`tab-${tabName}`).classList.add('active');
             
-            // Highlight nav
-            const index = tabName === 'home' ? 0 : 1;
-            document.querySelectorAll('.nav-item')[index].classList.add('active');
-
-            // Toggle Quick Add Bar visibility
-            document.getElementById('quick-add-bar').style.display = tabName === 'home' ? 'flex' : 'none';
+            const idx = ['home', 'gacha', 'journal', 'settings'].indexOf(tabName);
+            document.querySelectorAll('.nav-item')[idx].classList.add('active');
         }
 
-        /* --- Task Logic (v3.4 Monument) --- */
-        function renderLists() {
+        /* --- Task Logic --- */
+        function renderTasks() {
             const activeList = document.getElementById('active-list');
             const sedimentList = document.getElementById('sediment-list');
-            const divider = document.getElementById('divider-area');
+            const harvestArea = document.getElementById('harvest-area');
             
             activeList.innerHTML = ''; sedimentList.innerHTML = '';
-            let hasSediment = false;
+            let hasCompleted = false;
 
+            // Sort by time
             tasks.sort((a, b) => b.timestamp - a.timestamp);
 
             tasks.forEach(task => {
                 const li = document.createElement('li');
+                
                 if (!task.completed) {
                     li.className = 'task-item';
                     li.innerHTML = `
-                        <div class="check-circle" onclick="completeTask('${task.id}')"></div>
-                        <div class="task-text">${task.text}</div>
-                        <i class="fas fa-times" onclick="deleteTask('${task.id}')" style="color:#eee; padding:10px;"></i>
+                        <div class="check-circle" onclick="toggleTask('${task.id}')"></div>
+                        <div class="task-content">
+                            <div class="task-title">${task.title} 
+                                ${task.desc ? '<i class="fas fa-caret-down expand-btn" onclick="toggleDesc(this)"></i>' : ''}
+                            </div>
+                            <div class="task-desc">${task.desc || ''}</div>
+                        </div>
+                        <i class="fas fa-times" onclick="deleteTask('${task.id}')" style="color:#eee; padding:5px;"></i>
                     `;
                     activeList.appendChild(li);
                 } else {
-                    hasSediment = true;
+                    hasCompleted = true;
                     li.className = 'task-item sediment';
-                    li.innerHTML = `<div class="check-circle"></div><div class="task-text">${task.text}</div>`;
+                    li.innerHTML = `
+                        <div class="check-circle"></div>
+                        <div class="task-content">
+                            <div class="task-title">${task.title}</div>
+                        </div>
+                    `;
                     sedimentList.appendChild(li);
                 }
             });
-            divider.style.display = hasSediment ? 'block' : 'none';
+
+            harvestArea.style.display = hasCompleted ? 'block' : 'none';
         }
 
-        function addTask() {
-            const input = document.getElementById('task-input');
-            if (input.value.trim()) {
-                tasks.unshift({ id: Date.now().toString(36), text: input.value.trim(), completed: false, timestamp: Date.now() });
-                saveTasks(); renderLists(); input.value = '';
+        function openTaskModal() { document.getElementById('task-modal').style.display = 'flex'; document.getElementById('modal-task-title').focus(); }
+        function closeTaskModal() { document.getElementById('task-modal').style.display = 'none'; }
+        
+        function saveTaskFromModal() {
+            const title = document.getElementById('modal-task-title').value.trim();
+            const desc = document.getElementById('modal-task-desc').value.trim();
+            if (title) {
+                tasks.unshift({ id: Date.now().toString(36), title, desc, completed: false, timestamp: Date.now() });
+                saveTasks(); renderTasks(); closeTaskModal();
+                document.getElementById('modal-task-title').value = '';
+                document.getElementById('modal-task-desc').value = '';
             }
         }
-        function handleKey(e) { if(e.key==='Enter') addTask(); }
 
-        function completeTask(id) {
+        function toggleTask(id) {
             const task = tasks.find(t => t.id === id);
-            if (task) { task.completed = true; task.timestamp = Date.now(); saveTasks(); renderLists(); if(navigator.vibrate) navigator.vibrate(30); }
+            if(task) { task.completed = !task.completed; task.timestamp = Date.now(); saveTasks(); renderTasks(); if(navigator.vibrate) navigator.vibrate(30); }
         }
-        function deleteTask(id) { tasks = tasks.filter(t => t.id !== id); saveTasks(); renderLists(); }
-        function saveTasks() { localStorage.setItem('legacy_tasks', JSON.stringify(tasks)); }
 
+        function toggleDesc(btn) {
+            const item = btn.closest('.task-item');
+            item.classList.toggle('expanded');
+            btn.className = item.classList.contains('expanded') ? 'fas fa-caret-up expand-btn' : 'fas fa-caret-down expand-btn';
+        }
+
+        function deleteTask(id) {
+            if(confirm('刪除此任務？')) { tasks = tasks.filter(t => t.id !== id); saveTasks(); renderTasks(); }
+        }
+
+        /* --- Accumulation / Harvest Logic --- */
         function harvestTasks() {
-            const completedCount = tasks.filter(t => t.completed).length;
-            if (completedCount > 0 && confirm(`封存這 ${completedCount} 個項目？`)) {
-                lifetimeCount += completedCount;
-                localStorage.setItem('legacy_lifetime_count', lifetimeCount);
-                document.getElementById('total-count').innerText = lifetimeCount;
-                
+            const completed = tasks.filter(t => t.completed);
+            if(completed.length > 0 && confirm(`封存這 ${completed.length} 個任務到生涯累積？`)) {
+                legacyCount += completed.length;
+                updateLegacyDisplay();
                 tasks = tasks.filter(t => !t.completed);
-                saveTasks(); renderLists();
+                saveTasks(); renderTasks();
+                // Animation effect
+                const countEl = document.getElementById('total-count');
+                countEl.style.animation = 'pop 0.3s';
+                setTimeout(() => countEl.style.animation = 'none', 300);
             }
         }
 
-        /* --- Journal Logic (New) --- */
-        function selectMood(mood) {
-            currentMood = mood;
-            document.querySelectorAll('.mood-btn').forEach(btn => {
-                btn.classList.toggle('selected', btn.innerText === mood);
+        function updateLegacyDisplay() {
+            localStorage.setItem('v36_legacy_count', legacyCount);
+            document.getElementById('total-count').innerText = legacyCount;
+        }
+
+        function saveTasks() { localStorage.setItem('v36_tasks', JSON.stringify(tasks)); }
+
+        /* --- Gacha Logic --- */
+        let currentGacha = null;
+        function playGacha() {
+            const icon = document.getElementById('gacha-icon');
+            icon.style.animation = 'pop 0.5s infinite';
+            setTimeout(() => {
+                icon.style.animation = 'none';
+                currentGacha = gachaPool[Math.floor(Math.random() * gachaPool.length)];
+                document.getElementById('gacha-title').innerText = currentGacha.title;
+                document.getElementById('gacha-desc').innerText = currentGacha.desc;
+                document.getElementById('gacha-result').style.display = 'block';
+            }, 800);
+        }
+        function acceptGacha() {
+            if(currentGacha) {
+                tasks.unshift({id: Date.now().toString(36), title: currentGacha.title, desc: currentGacha.desc, completed: false, timestamp: Date.now()});
+                saveTasks(); renderTasks(); switchTab('home');
+                document.getElementById('gacha-result').style.display = 'none';
+            }
+        }
+        function renderPool() {
+            const list = document.getElementById('pool-list'); list.innerHTML = '';
+            gachaPool.forEach((item, idx) => {
+                list.innerHTML += `<li class="pool-item"><div><b>${item.title}</b><br><small>${item.desc}</small></div><i class="fas fa-trash" onclick="removeFromPool(${idx})" style="color:#ccc;"></i></li>`;
+            });
+            localStorage.setItem('v36_pool', JSON.stringify(gachaPool));
+        }
+        function addToPool() {
+            const t = document.getElementById('pool-new-title').value.trim();
+            const d = document.getElementById('pool-new-desc').value.trim();
+            if(t) { gachaPool.push({title:t, desc:d}); renderPool(); document.getElementById('pool-new-title').value=''; document.getElementById('pool-new-desc').value=''; }
+        }
+        function removeFromPool(idx) { gachaPool.splice(idx, 1); renderPool(); }
+
+        /* --- Journal Logic --- */
+        function selectMood(m) {
+            currentMood = m;
+            document.querySelectorAll('.mood-btn').forEach(b => b.classList.toggle('selected', b.innerText === m));
+        }
+        
+        function renderJournalQuestions() {
+            const area = document.getElementById('dynamic-questions-area');
+            area.innerHTML = '';
+            reviewQuestions.forEach((q, idx) => {
+                area.innerHTML += `
+                    <div class="review-question">
+                        <span class="review-label">${q}</span>
+                        <input type="text" class="review-input q-input" data-idx="${idx}">
+                    </div>
+                `;
             });
         }
 
         function saveJournal() {
-            const text = document.getElementById('journal-text').value.trim();
-            if (!currentMood && !text) { alert('請至少選擇心情或寫點東西！'); return; }
+            const qInputs = document.querySelectorAll('.q-input');
+            let qa = [];
+            qInputs.forEach(input => {
+                qa.push({ q: reviewQuestions[input.dataset.idx], a: input.value });
+            });
+            const free = document.getElementById('journal-free-text').value;
+
+            if(!currentMood && !free) { alert('請至少選個心情或寫點字'); return; }
 
             const entry = {
-                id: Date.now(),
-                date: new Date().toLocaleString(),
-                mood: currentMood || '📝',
-                text: text
+                id: Date.now(), date: new Date().toLocaleString(),
+                mood: currentMood, qa: qa, free: free
             };
-
             journals.unshift(entry);
-            localStorage.setItem('life_journals', JSON.stringify(journals));
+            localStorage.setItem('v36_journals', JSON.stringify(journals));
             
-            // Reset Form
-            document.getElementById('journal-text').value = '';
-            selectMood('');
-            currentMood = '';
-            
-            renderJournals();
+            // Clear UI
+            selectMood(''); document.getElementById('journal-free-text').value = '';
+            qInputs.forEach(i => i.value = '');
+            renderJournalHistory();
             alert('日誌已儲存');
         }
 
-        function renderJournals() {
-            const list = document.getElementById('journal-list');
-            list.innerHTML = '';
+        function renderJournalHistory() {
+            const list = document.getElementById('journal-history'); list.innerHTML = '';
             journals.forEach(j => {
-                const li = document.createElement('li');
-                li.className = 'journal-item';
-                li.innerHTML = `
-                    <div class="journal-meta">
-                        <span>${j.date}</span>
-                        <span style="font-size:1.2rem">${j.mood}</span>
-                    </div>
-                    <div class="journal-content">${j.text}</div>
+                let qaHtml = j.qa.map(item => `<div><small><b>${item.q}</b></small><br>${item.a || '-'}</div>`).join('<br>');
+                list.innerHTML += `
+                    <li class="journal-history-item">
+                        <div style="display:flex; justify-content:space-between; margin-bottom:5px; color:#888; font-size:0.8rem;">
+                            <span>${j.date}</span><span>${j.mood || ''}</span>
+                        </div>
+                        ${qaHtml}
+                        ${j.free ? `<div style="margin-top:10px; border-top:1px dashed #eee; padding-top:5px;">${j.free}</div>` : ''}
+                    </li>
                 `;
-                list.appendChild(li);
             });
         }
+
+        /* --- Settings Logic (Custom Questions) --- */
+        function renderQuestionSettings() {
+            const list = document.getElementById('questions-list'); list.innerHTML = '';
+            reviewQuestions.forEach((q, idx) => {
+                list.innerHTML += `<li class="settings-item"><span>${q}</span><i class="fas fa-times" onclick="removeQuestion(${idx})" style="color:#ccc;"></i></li>`;
+            });
+            localStorage.setItem('v36_questions', JSON.stringify(reviewQuestions));
+        }
+        function addQuestionTemplate() {
+            const v = document.getElementById('new-question-input').value.trim();
+            if(v) { reviewQuestions.push(v); renderQuestionSettings(); renderJournalQuestions(); document.getElementById('new-question-input').value=''; }
+        }
+        function removeQuestion(idx) { reviewQuestions.splice(idx, 1); renderQuestionSettings(); renderJournalQuestions(); }
+        function resetAllData() {
+            if(confirm('警告：這將刪除所有任務、日誌與累積數字，無法復原。確定嗎？')) {
+                localStorage.clear(); location.reload();
+            }
+        }
+
+        /* --- Cooldown Logic --- */
+        let cdInterval;
+        function openCooldown() { document.getElementById('cooldown-modal').style.display = 'flex'; startTimer(); }
+        function closeCooldown() { document.getElementById('cooldown-modal').style.display = 'none'; clearInterval(cdInterval); }
+        function startTimer() {
+            let t = 180;
+            const display = document.getElementById('timer-display');
+            const btn = document.getElementById('stop-cooldown-btn');
+            btn.disabled = true; btn.innerText = "計時中..."; btn.style.background = "#ccc";
+            
+            clearInterval(cdInterval);
+            cdInterval = setInterval(() => {
+                t--;
+                let m = Math.floor(t/60).toString().padStart(2,'0');
+                let s = (t%60).toString().padStart(2,'0');
+                display.innerText = `${m}:${s}`;
+                if(t<=0) {
+                    clearInterval(cdInterval);
+                    btn.disabled = false; btn.innerText = "完成冷卻"; btn.style.background = "var(--primary)";
+                    if(navigator.vibrate) navigator.vibrate([200,100,200]);
+                }
+            }, 1000);
+        }
+        function stopCooldown() { closeCooldown(); document.getElementById('anger-input').value = ''; }
+
     </script>
 </body>
 </html>
