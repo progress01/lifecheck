@@ -2,469 +2,404 @@
 <html lang="zh-TW">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Sanctuary: Architect</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Life Quest Guild v6.1</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         :root {
-            --primary: #3742fa; --accent: #ff4757; --success: #2ed573; --dark: #2f3542;
-            --bg-glass: rgba(255, 255, 255, 0.94);
-            --nav-h: calc(65px + env(safe-area-inset-bottom, 20px));
-            --radius: 16px;
+            /* Habitica-inspired Palette */
+            --habit-color: #f2a900; /* Gold/Yellow */
+            --daily-color: #878190; /* Grey/Silver for unchecked */
+            --todo-color: #ff9f43; /* Orange */
+            --primary: #4f2a93;     /* Purple */
+            --bg: #f3f3f3;
+            --card-bg: #ffffff;
+            --text: #333;
+            --danger: #ff5252;
         }
-        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; user-select: none; }
-        body { margin: 0; padding: 0; height: 100vh; background: #dfe4ea; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; color: var(--dark); overflow: hidden; }
 
-        /* --- Canvas Background --- */
-        #world { position: fixed; top: 0; left: 0; width: 100%; height: 40vh; z-index: 0; background: linear-gradient(to bottom, #a4b0be, #dfe4ea); }
-
-        /* --- App Layout --- */
-        .app { position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: flex; flex-direction: column; z-index: 10; }
-        .spacer { flex: 0 0 35vh; transition: flex 0.4s; }
-        .spacer.collapsed { flex: 0 0 10vh; }
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
         
-        .sheet {
-            flex: 1; background: var(--bg-glass); backdrop-filter: blur(15px);
-            border-top-left-radius: 25px; border-top-right-radius: 25px;
-            box-shadow: 0 -5px 30px rgba(0,0,0,0.1);
-            padding: 20px; padding-bottom: calc(var(--nav-h) + 20px);
-            overflow-y: auto; scroll-behavior: smooth; transition: transform 0.3s;
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background: var(--bg); color: var(--text);
+            margin: 0; padding: 20px; padding-bottom: 80px;
         }
 
-        /* --- Components --- */
-        h2 { font-size: 0.9rem; color: #747d8c; text-transform: uppercase; letter-spacing: 1px; margin: 25px 0 10px 0; display:flex; justify-content:space-between; align-items:center; }
-        .btn { border: none; padding: 10px 18px; border-radius: 10px; font-weight: bold; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; font-size: 0.9rem; transition: 0.1s; }
-        .btn:active { transform: scale(0.96); }
-        .btn-primary { background: var(--primary); color: white; box-shadow: 0 4px 12px rgba(55,66,250,0.3); }
-        .btn-ghost { background: transparent; color: #a4b0be; border: 1px solid #ced6e0; padding: 6px 12px; font-size: 0.8rem; }
-        .btn-danger { background: #ffeaa7; color: #d63031; border: 1px solid #d63031; }
-
-        .input-box { width: 100%; padding: 12px; border: 1px solid #ced6e0; border-radius: 12px; background: white; font-size: 1rem; margin-bottom: 10px; }
+        /* --- Layout: The Dashboard --- */
+        .container { max-width: 1200px; margin: 0 auto; }
         
-        /* --- Quest Lore Card (New) --- */
-        .lore-card {
-            background: #fff; border-left: 4px solid var(--primary); padding: 15px; border-radius: 8px;
-            margin-bottom: 20px; box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+        /* 頂部：狀態與指引 */
+        header { display: flex; flex-wrap: wrap; gap: 20px; margin-bottom: 20px; }
+        
+        .profile-card {
+            flex: 1; min-width: 300px; background: var(--card-bg); padding: 15px;
+            border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            border-top: 4px solid var(--primary); display: flex; align-items: center; gap: 15px;
         }
-        .lore-title { font-weight: bold; font-size: 1rem; margin-bottom: 5px; color: var(--primary); }
-        .lore-desc { font-size: 0.9rem; color: #57606f; line-height: 1.5; white-space: pre-wrap; }
+        .avatar { width: 50px; height: 50px; background: var(--primary); color: white; border-radius: 4px; display: flex; justify-content: center; align-items: center; font-size: 1.5rem; }
+        
+        /* 銘文系統 (Lore) - 參考 Image 2 */
+        .lore-section {
+            flex: 2; min-width: 300px; background: #e8f4fd; padding: 15px;
+            border-radius: 8px; border-left: 4px solid #2980b9; color: #2c3e50;
+            cursor: pointer; position: relative;
+        }
+        .lore-section:hover { background: #d6eaf8; }
+        .lore-title { font-weight: bold; margin-bottom: 5px; display: flex; justify-content: space-between; }
+        .lore-text { font-size: 0.9rem; line-height: 1.5; white-space: pre-wrap; }
 
-        /* --- Task Lists --- */
+        /* 三欄式佈局 - 參考 Image 1 */
+        .grid-board {
+            display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 15px; align-items: start;
+        }
+
+        /* 欄位樣式 */
+        .column {
+            background: #e0e0e0; padding: 10px; border-radius: 8px; min-height: 200px;
+        }
+        
+        .col-header {
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 5px 10px; margin-bottom: 10px; font-weight: bold; color: #555; text-transform: uppercase; font-size: 0.9rem;
+        }
+        
+        /* 清除按鈕 (針對單一分頁) */
+        .clear-btn {
+            background: none; border: none; color: #999; cursor: pointer; font-size: 0.8rem;
+            transition: color 0.2s;
+        }
+        .clear-btn:hover { color: var(--danger); }
+
+        /* 任務卡片 */
         .task-list { list-style: none; padding: 0; margin: 0; }
-        .task-item {
-            background: white; padding: 15px; margin-bottom: 10px; border-radius: 14px;
-            display: flex; align-items: center; position: relative;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.03); transition: all 0.2s; border: 1px solid transparent;
+        
+        .task-card {
+            background: var(--card-bg); padding: 12px; margin-bottom: 8px;
+            border-radius: 4px; display: flex; align-items: flex-start;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.1); border-left: 4px solid transparent;
+            transition: transform 0.1s; cursor: pointer; position: relative;
         }
-        
-        /* Frequency Styles */
-        .type-ritual { border-left: 4px solid var(--accent); } /* Daily */
-        .type-action { border-left: 4px solid var(--primary); } /* Todo */
-        .type-habit { border-left: 4px solid var(--success); } /* Habit */
+        .task-card:active { transform: scale(0.98); }
 
-        /* States */
-        .task-item.done { opacity: 0.6; background: #f1f2f6; }
-        .task-item.done .task-title { text-decoration: line-through; color: #a4b0be; }
-        
-        /* Daily Done State (Don't strike through, just dim) */
-        .task-item.daily-done { background: #f1f2f6; border-left-color: #ced6e0; }
-        .task-item.daily-done .check-circle { background: #ced6e0; border-color: #ced6e0; }
+        /* 分類顏色 */
+        .col-habit .task-card { border-left-color: var(--habit-color); }
+        .col-daily .task-card { border-left-color: var(--daily-color); }
+        .col-todo .task-card { border-left-color: var(--todo-color); }
 
-        .check-circle {
-            width: 24px; height: 24px; border: 2px solid #ced6e0; border-radius: 50%;
-            margin-right: 12px; flex-shrink: 0; cursor: pointer; transition: 0.2s;
+        /* 內容佈局 */
+        .task-check { 
+            width: 24px; height: 24px; background: #eee; border-radius: 4px; 
+            margin-right: 10px; display: flex; justify-content: center; align-items: center;
+            cursor: pointer; flex-shrink: 0; margin-top: 2px;
         }
-        .type-habit .check-circle { border-radius: 6px; border-color: var(--success); color: var(--success); display:flex; align-items:center; justify-content:center; font-weight:bold;}
-        .type-habit .check-circle::after { content: '+'; }
+        .col-habit .task-check { background: var(--habit-color); color: white; font-weight: bold; }
+        .col-habit .task-check::after { content: '+'; }
         
-        .task-content { flex: 1; }
-        .task-title { font-size: 1rem; font-weight: 600; }
-        .task-meta { font-size: 0.75rem; color: #a4b0be; margin-top: 3px; display: flex; gap: 5px; }
-        .tag { background: #f1f2f6; padding: 2px 6px; border-radius: 4px; }
+        .task-main { flex: 1; }
+        .task-title { font-size: 0.95rem; font-weight: 600; line-height: 1.3; }
+        .task-desc { font-size: 0.8rem; color: #888; margin-top: 4px; display: none; }
+        .task-card.expanded .task-desc { display: block; padding-top: 5px; border-top: 1px dashed #eee; }
 
-        /* --- Tabs --- */
-        .tab-content { display: none; animation: fadeIn 0.3s; }
-        .tab-content.active { display: block; }
-        
-        /* --- FAB & Nav --- */
+        .task-delete { color: #ddd; padding: 5px; margin-left: 5px; }
+        .task-delete:hover { color: var(--danger); }
+
+        /* 完成狀態 */
+        .task-card.completed { opacity: 0.6; background: #f9f9f9; }
+        .task-card.completed .task-title { text-decoration: line-through; }
+        .col-daily .task-card.completed .task-check { background: #aaa; }
+        .col-todo .task-card.completed .task-check::after { content: '✔'; color: #555; }
+
+        /* --- Fab & Modals --- */
         .fab {
-            position: fixed; bottom: calc(var(--nav-h) + 20px); right: 20px;
-            width: 56px; height: 56px; background: var(--primary); color: white;
+            position: fixed; bottom: 30px; right: 30px;
+            width: 60px; height: 60px; background: var(--primary); color: white;
             border-radius: 50%; display: flex; justify-content: center; align-items: center;
-            font-size: 1.5rem; box-shadow: 0 10px 20px rgba(55,66,250,0.4); z-index: 100;
-            transition: transform 0.2s; cursor: pointer;
+            font-size: 1.8rem; box-shadow: 0 4px 15px rgba(0,0,0,0.3); z-index: 100; cursor: pointer;
         }
-        .fab:active { transform: rotate(90deg); }
 
-        .bottom-nav {
-            position: fixed; bottom: 0; left: 0; width: 100%; height: var(--nav-h);
-            background: rgba(255,255,255,0.95); backdrop-filter: blur(10px);
-            display: flex; justify-content: space-around; padding-top: 12px;
-            box-shadow: 0 -5px 15px rgba(0,0,0,0.05); z-index: 1000;
-        }
-        .nav-item { text-align: center; color: #ced6e0; font-size: 0.7rem; cursor: pointer; }
-        .nav-item i { display: block; font-size: 1.4rem; margin-bottom: 4px; }
-        .nav-item.active { color: var(--primary); transform: translateY(-2px); }
-
-        /* --- Modals --- */
         .modal-overlay {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.6); z-index: 2000; display: none;
+            background: rgba(0,0,0,0.5); z-index: 2000; display: none;
             justify-content: center; align-items: center; padding: 20px;
         }
-        .modal { background: white; width: 100%; max-width: 400px; padding: 25px; border-radius: 20px; animation: popUp 0.3s; }
-        .radio-group { display: flex; gap: 10px; margin-bottom: 15px; }
-        .radio-opt { 
-            flex: 1; padding: 10px; border: 1px solid #ced6e0; border-radius: 8px; text-align: center; font-size: 0.85rem; cursor: pointer; 
+        .modal { background: white; width: 100%; max-width: 400px; padding: 20px; border-radius: 12px; }
+        
+        .input-group { margin-bottom: 15px; }
+        .input-box { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 6px; font-size: 1rem; }
+        
+        .type-selector { display: flex; gap: 5px; margin-bottom: 15px; }
+        .type-btn { 
+            flex: 1; padding: 10px; border: 2px solid #eee; border-radius: 6px; 
+            text-align: center; cursor: pointer; font-size: 0.9rem; font-weight: bold; color: #888;
         }
-        .radio-opt.selected { background: var(--primary); color: white; border-color: var(--primary); }
+        .type-btn.active[data-type="habit"] { border-color: var(--habit-color); color: var(--habit-color); background: #fffcf0; }
+        .type-btn.active[data-type="daily"] { border-color: var(--daily-color); color: var(--daily-color); background: #f4f4f4; }
+        .type-btn.active[data-type="todo"] { border-color: var(--todo-color); color: var(--todo-color); background: #fff5eb; }
 
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-        @keyframes popUp { from { transform: scale(0.9); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+        .btn-submit { width: 100%; padding: 12px; background: var(--primary); color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; }
+        .btn-close { width: 100%; padding: 10px; background: none; border: none; color: #888; margin-top: 5px; cursor: pointer; }
+
     </style>
 </head>
 <body>
 
-    <canvas id="world"></canvas>
-
-    <div class="app">
-        <div class="spacer" onclick="app.toggleView()"></div>
-        <div class="sheet">
-            
-            <div id="tab-home" class="tab-content active">
-                <div class="lore-card" onclick="ui.modalOpen('lore')">
-                    <div class="lore-title"><i class="fas fa-scroll"></i> 本期誓言 (點擊編輯)</div>
-                    <div class="lore-desc" id="display-lore">設定你的核心目標...</div>
-                </div>
-
-                <h2><i class="fas fa-redo"></i> 習慣 (Habits) <small>無限累積</small></h2>
-                <ul id="list-habits" class="task-list"></ul>
-
-                <h2><i class="fas fa-sun"></i> 儀式 (Daily) <small id="daily-timer">午夜重置</small></h2>
-                <ul id="list-dailies" class="task-list"></ul>
-
-                <h2><i class="fas fa-check-square"></i> 行動 (Quest) <small>單次任務</small></h2>
-                <ul id="list-todos" class="task-list"></ul>
-                <div style="text-align:center; margin-top:15px;">
-                    <button class="btn btn-primary" onclick="app.harvest()">
-                        <i class="fas fa-archive"></i> 封存完成的行動
-                    </button>
-                </div>
+<div class="container">
+    <header>
+        <div class="profile-card">
+            <div class="avatar"><i class="fas fa-user-astronaut"></i></div>
+            <div>
+                <div style="font-size:0.8rem; color:#888;">LIFETIME LEGACY</div>
+                <div style="font-size:1.5rem; font-weight:bold; color:var(--primary);" id="stat-legacy">0</div>
             </div>
+        </div>
 
-            <div id="tab-gacha" class="tab-content">
-                <div style="text-align:center; padding:40px 0;">
-                    <i class="fas fa-dice-d20" style="font-size:4rem; color:var(--primary); margin-bottom:20px;"></i>
-                    <br>
-                    <button class="btn btn-primary" onclick="app.spinGacha()">抽取命運</button>
-                    <div id="gacha-result" style="margin-top:20px; display:none; padding:15px; border:2px solid var(--accent); border-radius:12px;">
-                        <h3 id="res-title" style="margin:0;"></h3>
-                        <p id="res-desc" style="color:#666;"></p>
-                        <button class="btn btn-primary" onclick="app.acceptGacha()">加入行動清單</button>
-                    </div>
-                </div>
-                <h2>挑戰池 <button class="btn-ghost" onclick="app.clearData('pool')">清空</button></h2>
-                <div style="display:flex; gap:10px;">
-                    <input id="pool-in" class="input-box" placeholder="新挑戰..." style="margin:0">
-                    <button class="btn btn-ghost" onclick="app.addPool()">+</button>
-                </div>
-                <ul id="list-pool" class="task-list" style="margin-top:10px;"></ul>
+        <div class="lore-section" onclick="ui.openLoreModal()">
+            <div class="lore-title">
+                <span><i class="fas fa-scroll"></i> 冒險指引 (Context)</span>
+                <i class="fas fa-pen" style="font-size:0.8rem; opacity:0.5;"></i>
             </div>
+            <div class="lore-text" id="lore-display">點擊此處設定你的核心目標與背景故事...</div>
+        </div>
+    </header>
 
-            <div id="tab-journal" class="tab-content">
-                <h2>每日檢討 <button class="btn-ghost" onclick="app.clearData('journal')">清空歷史</button></h2>
-                <div style="background:white; padding:15px; border-radius:14px; margin-bottom:20px;">
-                    <textarea id="j-note" class="input-box" rows="3" placeholder="今日心得..."></textarea>
-                    <button class="btn btn-primary" style="width:100%" onclick="app.saveJournal()">記錄</button>
-                </div>
-                <ul id="list-journal" class="task-list"></ul>
-            </div>
-
-            <div id="tab-settings" class="tab-content">
-                <h2>累積基石 (歷史) <button class="btn-ghost" onclick="app.clearData('legacy')">清空</button></h2>
-                <ul id="list-legacy" class="task-list"></ul>
-                
-                <h2>資料管理</h2>
-                <button class="btn btn-danger" style="width:100%" onclick="app.resetAll()">
-                    <i class="fas fa-bomb"></i> 格式化整個聖殿 (重置所有)
+    <div class="grid-board">
+        
+        <div class="column col-habit">
+            <div class="col-header">
+                習慣 Habits
+                <button class="clear-btn" onclick="app.clearList('habit')" title="清空習慣">
+                    <i class="fas fa-trash"></i>
                 </button>
-                <div style="font-size:0.8rem; color:#a4b0be; text-align:center; margin-top:20px;">
-                    Mind Sanctuary v6.0 Architect
-                </div>
             </div>
-
+            <ul id="list-habit" class="task-list"></ul>
         </div>
-    </div>
 
-    <div class="fab" onclick="ui.modalOpen('task')"><i class="fas fa-plus"></i></div>
-
-    <div id="modal-task" class="modal-overlay">
-        <div class="modal">
-            <h3>新增項目</h3>
-            <input id="inp-title" class="input-box" placeholder="標題">
-            <div class="radio-group">
-                <div class="radio-opt selected" onclick="app.setType('habit', this)">習慣<br><small>無限次</small></div>
-                <div class="radio-opt" onclick="app.setType('ritual', this)">儀式<br><small>每日</small></div>
-                <div class="radio-opt" onclick="app.setType('action', this)">行動<br><small>單次</small></div>
+        <div class="column col-daily">
+            <div class="col-header">
+                每日 Daily
+                <button class="clear-btn" onclick="app.clearList('daily')" title="清空每日任務">
+                    <i class="fas fa-trash"></i>
+                </button>
             </div>
-            <div style="display:flex; gap:10px;">
-                <button class="btn btn-primary" style="flex:1" onclick="app.addTask()">新增</button>
-                <button class="btn btn-ghost" style="flex:1" onclick="ui.modalClose('task')">取消</button>
+            <ul id="list-daily" class="task-list"></ul>
+        </div>
+
+        <div class="column col-todo">
+            <div class="col-header">
+                待辦 To-Do
+                <button class="clear-btn" onclick="app.clearList('todo')" title="清空已完成待辦">
+                    <i class="fas fa-archive"></i>
+                </button>
             </div>
+            <ul id="list-todo" class="task-list"></ul>
         </div>
-    </div>
 
-    <div id="modal-lore" class="modal-overlay">
-        <div class="modal">
-            <h3>編輯本期誓言</h3>
-            <textarea id="inp-lore" class="input-box" rows="5" placeholder="寫下這個階段的目標或世界觀背景..."></textarea>
-            <button class="btn btn-primary" style="width:100%" onclick="app.saveLore()">保存</button>
-            <button class="btn btn-ghost" style="width:100%; margin-top:10px;" onclick="ui.modalClose('lore')">取消</button>
+    </div>
+</div>
+
+<div class="fab" onclick="ui.openAddModal()">
+    <i class="fas fa-plus"></i>
+</div>
+
+<div id="modal-add" class="modal-overlay">
+    <div class="modal">
+        <h3 style="margin-top:0;">新增項目</h3>
+        <div class="input-group">
+            <input id="inp-title" class="input-box" placeholder="標題 (e.g. 喝水, 運動)">
         </div>
+        <div class="input-group">
+            <textarea id="inp-desc" class="input-box" rows="3" placeholder="詳細說明 / 為什麼要做這個？"></textarea>
+        </div>
+        
+        <label style="font-size:0.8rem; color:#888; display:block; margin-bottom:5px;">頻率設定 (Frequency)</label>
+        <div class="type-selector">
+            <div class="type-btn active" data-type="habit" onclick="ui.selectType('habit')">習慣<br><small>無限次</small></div>
+            <div class="type-btn" data-type="daily" onclick="ui.selectType('daily')">每日<br><small>午夜重置</small></div>
+            <div class="type-btn" data-type="todo" onclick="ui.selectType('todo')">待辦<br><small>單次</small></div>
+        </div>
+
+        <button class="btn-submit" onclick="app.addTask()">建立</button>
+        <button class="btn-close" onclick="ui.closeAddModal()">取消</button>
     </div>
+</div>
 
-    <nav class="bottom-nav">
-        <div class="nav-item active" onclick="ui.tab('home', this)"><i class="fas fa-dungeon"></i>聖殿</div>
-        <div class="nav-item" onclick="ui.tab('gacha', this)"><i class="fas fa-dice"></i>命運</div>
-        <div class="nav-item" onclick="ui.tab('journal', this)"><i class="fas fa-book"></i>日誌</div>
-        <div class="nav-item" onclick="ui.tab('settings', this)"><i class="fas fa-cog"></i>設定</div>
-    </nav>
+<div id="modal-lore" class="modal-overlay">
+    <div class="modal">
+        <h3>編輯冒險指引</h3>
+        <textarea id="inp-lore" class="input-box" rows="6" placeholder="寫下你的目標、動機或世界觀..."></textarea>
+        <button class="btn-submit" onclick="app.saveLore()">保存</button>
+        <button class="btn-close" onclick="ui.closeLoreModal()">取消</button>
+    </div>
+</div>
 
-    <script>
-        // --- 1. Sound Engine (8-bit) ---
-        const sfx = {
-            ctx: null,
-            init() { if(!this.ctx) this.ctx = new (window.AudioContext||window.webkitAudioContext)(); },
-            beep(f,t,d) {
-                if(!this.ctx) this.init(); if(this.ctx.state==='suspended') this.ctx.resume();
-                const o=this.ctx.createOscillator(), g=this.ctx.createGain();
-                o.type=t; o.frequency.value=f; g.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime+d);
-                o.connect(g); g.connect(this.ctx.destination); o.start(); o.stop(this.ctx.currentTime+d);
-            },
-            click(){ this.beep(800,'sine',0.05); },
-            win(){ [440,554,659].forEach((f,i)=>setTimeout(()=>this.beep(f,'square',0.1),i*80)); },
-            trash(){ this.beep(150,'sawtooth',0.2); }
-        };
-
-        // --- 2. Canvas Visuals ---
-        const visual = {
-            cvs: document.getElementById('world'),
-            ctx: document.getElementById('world').getContext('2d'),
-            resize() { this.cvs.width=window.innerWidth; this.cvs.height=window.innerHeight*0.4; this.draw(); },
-            draw() {
-                const w=this.cvs.width, h=this.cvs.height, ctx=this.ctx;
-                // Simple Sky
-                const grad=ctx.createLinearGradient(0,0,0,h); grad.addColorStop(0,'#a4b0be'); grad.addColorStop(1,'#dfe4ea');
-                ctx.fillStyle=grad; ctx.fillRect(0,0,w,h);
-                // Simple Tower based on Legacy Count
-                const count = store.db.legacy.length;
-                const bw=30, bh=15, cols=Math.ceil(w/bw), startY=h;
-                let drawn=0, row=0;
-                ctx.fillStyle='#747d8c'; ctx.strokeStyle='rgba(255,255,255,0.3)';
-                while(drawn<count){
-                    let inRow=Math.min(cols, count-drawn);
-                    for(let i=0; i<inRow; i++){
-                        ctx.fillRect((w-(inRow*bw))/2+i*bw, startY-(row*bh)-bh, bw, bh);
-                        ctx.strokeRect((w-(inRow*bw))/2+i*bw, startY-(row*bh)-bh, bw, bh);
-                    }
-                    drawn+=inRow; row++;
-                }
+<script>
+    // --- Data Store ---
+    const store = {
+        db: JSON.parse(localStorage.getItem('lqe_v6_1')) || {
+            tasks: [], 
+            legacy: 0,
+            lore: "歡迎來到公會大廳。\n這裡是你管理人生任務的指揮中心。\n\n點擊這裡編輯你的長期目標或世界觀設定。",
+            lastLogin: Date.now()
+        },
+        save() { 
+            localStorage.setItem('lqe_v6_1', JSON.stringify(this.db)); 
+            app.render(); 
+        },
+        checkReset() {
+            const today = new Date().toDateString();
+            const last = new Date(this.db.lastLogin).toDateString();
+            if(today !== last) {
+                // Reset Dailies only
+                let count = 0;
+                this.db.tasks.forEach(t => { if(t.type === 'daily') { t.completed = false; count++; } });
+                this.db.lastLogin = Date.now();
+                this.save();
+                if(count > 0) alert('☀️ 新的一天：每日任務已重置！');
             }
-        };
-        window.onresize = ()=>visual.resize();
+        }
+    };
 
-        // --- 3. Data Store ---
-        const store = {
-            db: JSON.parse(localStorage.getItem('ms_v6')) || {
-                tasks: [], legacy: [], journals: [], 
-                pool: [{t:"深呼吸",d:"3次"},{t:"喝水",d:"500cc"}],
-                lore: "在這裡寫下你的誓言，定義你的旅程...",
-                lastLogin: Date.now()
-            },
-            save() { localStorage.setItem('ms_v6', JSON.stringify(this.db)); visual.draw(); },
-            checkDailyReset() {
-                const today = new Date().toDateString();
-                const last = new Date(this.db.lastLogin).toDateString();
-                if(today !== last) {
-                    // Reset Rituals
-                    this.db.tasks.forEach(t => { if(t.type === 'ritual') t.done = false; });
-                    this.db.lastLogin = Date.now();
-                    this.save();
-                    alert('新的一天：儀式已重置');
-                }
+    // --- App Logic ---
+    let currentType = 'habit';
+
+    const app = {
+        init() {
+            // Default Data Injection (Fix for "empty screen" issue)
+            if (store.db.tasks.length === 0) {
+                store.db.tasks = [
+                    {id: 1, type: 'habit', title: '喝水', desc: '保持水分', completed: false},
+                    {id: 2, type: 'daily', title: '核心任務筆記', desc: '檢視今日重點', completed: false},
+                    {id: 3, type: 'todo', title: '設定這個 App', desc: '熟悉操作介面', completed: false}
+                ];
+                store.save();
             }
-        };
+            store.checkReset();
+            this.render();
+        },
 
-        // --- 4. Logic ---
-        let addType = 'habit'; // default
+        render() {
+            // Render Stats
+            document.getElementById('stat-legacy').innerText = store.db.legacy;
+            document.getElementById('lore-display').innerText = store.db.lore;
+            document.getElementById('inp-lore').value = store.db.lore;
 
-        const app = {
-            init() {
-                store.checkDailyReset();
-                this.render();
-                visual.resize();
-            },
-            render() {
-                // Render Tasks
-                const habits = document.getElementById('list-habits');
-                const dailies = document.getElementById('list-dailies');
-                const todos = document.getElementById('list-todos');
-                habits.innerHTML=''; dailies.innerHTML=''; todos.innerHTML='';
+            // Clear Lists
+            document.getElementById('list-habit').innerHTML = '';
+            document.getElementById('list-daily').innerHTML = '';
+            document.getElementById('list-todo').innerHTML = '';
 
-                store.db.tasks.forEach(t => {
-                    if(t.type === 'habit') {
-                        habits.innerHTML += this.htmlTask(t, 'habit');
-                    } else if (t.type === 'ritual') {
-                        dailies.innerHTML += this.htmlTask(t, 'ritual');
-                    } else {
-                        // Action/Todo
-                        if(!t.done) todos.innerHTML += this.htmlTask(t, 'action');
+            // Render Tasks
+            store.db.tasks.forEach(t => {
+                const li = document.createElement('li');
+                li.className = `task-card ${t.completed ? 'completed' : ''}`;
+                li.onclick = (e) => { 
+                    if(!e.target.classList.contains('task-check') && !e.target.classList.contains('task-delete')) {
+                        li.classList.toggle('expanded');
                     }
-                });
-
-                // Render Lore
-                document.getElementById('display-lore').innerText = store.db.lore;
-                document.getElementById('inp-lore').value = store.db.lore;
-
-                // Render Others
-                ui.renderList('list-pool', store.db.pool, (i)=>`<b>${i.t}</b> <small>${i.d}</small>`, true, 'pool');
-                ui.renderList('list-journal', store.db.journals, (i)=>`<small>${i.date}</small><br>${i.text}`, false);
-                ui.renderList('list-legacy', store.db.legacy, (i)=>`<del>${i.t}</del>`, false);
-            },
-            
-            htmlTask(t, type) {
-                let checkClass = type==='habit' ? 'check-circle' : (t.done ? 'check-circle' : 'check-circle');
-                let cardClass = `task-item type-${type} ${t.done?'done':''} ${type==='ritual'&&t.done?'daily-done':''}`;
-                return `
-                <li class="${cardClass}">
-                    <div class="${checkClass}" onclick="app.clickTask('${t.id}')"></div>
-                    <div class="task-content">
-                        <div class="task-title">${t.t}</div>
-                        ${t.count?`<div class="task-meta">次數: ${t.count}</div>`:''}
-                    </div>
-                    <i class="fas fa-times" style="color:#ced6e0; padding:10px;" onclick="app.delTask('${t.id}')"></i>
-                </li>`;
-            },
-
-            // Task Ops
-            setType(t, el) { 
-                addType=t; 
-                document.querySelectorAll('.radio-opt').forEach(e=>e.classList.remove('selected'));
-                el.classList.add('selected');
-            },
-            addTask() {
-                const t = document.getElementById('inp-title').value.trim();
-                if(t) {
-                    store.db.tasks.push({
-                        id: Date.now().toString(36), t:t, type:addType, done:false, count:0
-                    });
-                    store.save(); this.render(); ui.modalClose('task');
-                    document.getElementById('inp-title').value='';
-                    sfx.click();
-                }
-            },
-            clickTask(id) {
-                const t = store.db.tasks.find(x=>x.id===id);
-                if(!t) return;
+                };
                 
-                if(t.type === 'habit') {
-                    t.count++; sfx.win();
-                } else if (t.type === 'ritual') {
-                    t.done = !t.done; sfx.click();
-                } else {
-                    t.done = !t.done; sfx.click();
-                }
-                store.save(); this.render();
-            },
-            delTask(id) {
-                if(confirm('移除此項目？')) {
-                    store.db.tasks = store.db.tasks.filter(x=>x.id!==id);
-                    store.save(); this.render(); sfx.trash();
-                }
-            },
-            harvest() {
-                const done = store.db.tasks.filter(t=>t.type==='action' && t.done);
-                if(done.length && confirm(`封存 ${done.length} 個完成的行動？`)) {
-                    store.db.legacy.push(...done);
-                    store.db.tasks = store.db.tasks.filter(t=>!(t.type==='action' && t.done));
-                    store.save(); this.render(); sfx.win();
-                }
-            },
+                li.innerHTML = `
+                    <div class="task-check" onclick="app.check('${t.id}')"></div>
+                    <div class="task-main">
+                        <div class="task-title">${t.title}</div>
+                        <div class="task-desc">${t.desc || '無詳細說明'}</div>
+                    </div>
+                    <i class="fas fa-times task-delete" onclick="app.del('${t.id}')"></i>
+                `;
+                
+                document.getElementById(`list-${t.type}`).appendChild(li);
+            });
+        },
 
-            // Lore
-            saveLore() {
-                store.db.lore = document.getElementById('inp-lore').value;
-                store.save(); this.render(); ui.modalClose('lore');
-            },
-
-            // Gacha
-            spinGacha() {
-                const pool = store.db.pool;
-                if(!pool.length) return alert('挑戰池是空的');
-                const item = pool[Math.floor(Math.random()*pool.length)];
-                this.tempGacha = item;
-                document.getElementById('res-title').innerText = item.t;
-                document.getElementById('res-desc').innerText = item.d;
-                document.getElementById('gacha-result').style.display='block';
-                sfx.win();
-            },
-            acceptGacha() {
-                if(this.tempGacha) {
-                    store.db.tasks.push({id:Date.now().toString(36), t:this.tempGacha.t, type:'action', done:false});
-                    store.save(); this.render(); 
-                    document.getElementById('gacha-result').style.display='none';
-                    ui.tab('home', document.querySelectorAll('.nav-item')[0]);
-                }
-            },
-            addPool() {
-                const t = document.getElementById('pool-in').value;
-                if(t) { store.db.pool.push({t, d:''}); store.save(); this.render(); document.getElementById('pool-in').value=''; }
-            },
-
-            // Journal
-            saveJournal() {
-                const t = document.getElementById('j-note').value;
-                if(t) { store.db.journals.unshift({date:new Date().toLocaleString(), text:t}); store.save(); this.render(); document.getElementById('j-note').value=''; sfx.win(); }
-            },
-
-            // Settings
-            clearData(key) {
-                if(confirm(`確定清空 ${key}？`)) {
-                    store.db[key] = []; store.save(); this.render(); sfx.trash();
-                }
-            },
-            resetAll() {
-                if(confirm('⚠️ 警告：這將刪除所有資料！')) {
-                    localStorage.removeItem('ms_v6'); location.reload();
-                }
-            },
-            toggleView() { document.querySelector('.spacer').classList.toggle('collapsed'); }
-        };
-
-        // --- 5. UI Helpers ---
-        const ui = {
-            tab(id, el) {
-                document.querySelectorAll('.tab-content').forEach(e=>e.classList.remove('active'));
-                document.getElementById('tab-'+id).classList.add('active');
-                document.querySelectorAll('.nav-item').forEach(e=>e.classList.remove('active'));
-                el.classList.add('active');
-                document.querySelector('.fab').style.display = id==='home'?'flex':'none';
-                sfx.click();
-            },
-            modalOpen(id) { document.getElementById('modal-'+id).style.display='flex'; },
-            modalClose(id) { document.getElementById('modal-'+id).style.display='none'; },
-            renderList(id, list, htmlFn, canDel, delKey) {
-                const ul = document.getElementById(id); ul.innerHTML='';
-                list.forEach((item, i) => {
-                    ul.innerHTML += `<li class="task-item"><div class="task-content">${htmlFn(item)}</div>${canDel?`<i class="fas fa-trash" style="color:#ced6e0;cursor:pointer" onclick="app.delItem('${delKey}',${i})"></i>`:''}</li>`;
+        addTask() {
+            const title = document.getElementById('inp-title').value.trim();
+            const desc = document.getElementById('inp-desc').value.trim();
+            if (title) {
+                store.db.tasks.push({
+                    id: Date.now().toString(36),
+                    type: currentType,
+                    title: title,
+                    desc: desc,
+                    completed: false
                 });
+                store.save();
+                ui.closeAddModal();
+                document.getElementById('inp-title').value = '';
+                document.getElementById('inp-desc').value = '';
             }
-        };
-        // Helper for list deletion
-        app.delItem = (key, idx) => { store.db[key].splice(idx,1); store.save(); app.render(); sfx.trash(); };
+        },
 
-        // Init
-        app.init();
-    </script>
+        check(id) {
+            const t = store.db.tasks.find(x => x.id == id);
+            if (!t) return;
+
+            if (t.type === 'habit') {
+                // Habits just add stats, don't toggle
+                store.db.legacy++;
+                // Visual feedback only
+                alert('習慣 +1! (累積: ' + store.db.legacy + ')');
+            } else {
+                // Toggle state
+                t.completed = !t.completed;
+                if (t.completed && t.type === 'todo') {
+                    store.db.legacy++; // Completing a todo adds legacy
+                }
+            }
+            store.save();
+        },
+
+        del(id) {
+            if (confirm('確定移除此項目？')) {
+                store.db.tasks = store.db.tasks.filter(x => x.id != id);
+                store.save();
+            }
+        },
+
+        saveLore() {
+            store.db.lore = document.getElementById('inp-lore').value;
+            store.save();
+            ui.closeLoreModal();
+        },
+
+        // Clean specific lists (Addressing storage anxiety)
+        clearList(type) {
+            if (confirm(`確定要清空「${type.toUpperCase()}」列表嗎？`)) {
+                if (type === 'todo') {
+                    // For To-Do, usually only clear completed
+                    if(confirm('只清除「已完成」項目嗎？(取消則清除全部)')) {
+                        store.db.tasks = store.db.tasks.filter(t => !(t.type === 'todo' && t.completed));
+                    } else {
+                        store.db.tasks = store.db.tasks.filter(t => t.type !== 'todo');
+                    }
+                } else {
+                    // For Habits/Dailies, remove all
+                    store.db.tasks = store.db.tasks.filter(t => t.type !== type);
+                }
+                store.save();
+            }
+        }
+    };
+
+    // --- UI Logic ---
+    const ui = {
+        openAddModal: () => document.getElementById('modal-add').style.display = 'flex',
+        closeAddModal: () => document.getElementById('modal-add').style.display = 'none',
+        
+        openLoreModal: () => document.getElementById('modal-lore').style.display = 'flex',
+        closeLoreModal: () => document.getElementById('modal-lore').style.display = 'none',
+
+        selectType: (type) => {
+            currentType = type;
+            document.querySelectorAll('.type-btn').forEach(b => b.classList.remove('active'));
+            document.querySelector(`.type-btn[data-type="${type}"]`).classList.add('active');
+        }
+    };
+
+    // Boot
+    app.init();
+
+</script>
 </body>
 </html>
