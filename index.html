@@ -3,232 +3,168 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Life Quest Dashboard</title>
+    <title>Life Quest Engine</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-
     <style>
-        /* --- 樣式區 (CSS) --- */
         :root {
-            --bg-color: #f4f5f7;
-            --card-bg: #ffffff;
-            --text-main: #333;
-            --primary: #4f2a93; /* Habitica 紫色 */
-            --accent: #ffbe5c;  /* 挑戰專用金色 */
+            --primary: #4f2a93; /* Habitica Purple */
+            --accent: #ffbe5c;  /* Gold */
             --danger: #ff6b6b;
             --success: #4caf50;
-            --border-radius: 8px;
+            --bg: #f0f2f5;
+            --card-bg: #fff;
+            --text: #333;
+            --nav-height: 60px;
         }
 
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: var(--bg-color);
-            color: var(--text-main);
-            display: flex;
-            justify-content: center;
-            padding: 20px;
+            font-family: 'Segoe UI', sans-serif;
+            background: var(--bg);
+            color: var(--text);
             margin: 0;
+            padding: 0;
+            padding-bottom: 80px; /* 留給底部導航 */
         }
 
         .container {
-            width: 100%;
             max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
         }
 
+        /* --- Header & Stats --- */
         header {
             background: var(--card-bg);
-            padding: 20px;
-            border-radius: var(--border-radius);
-            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            padding: 15px;
+            border-radius: 12px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
             margin-bottom: 20px;
+            position: sticky;
+            top: 10px;
+            z-index: 100;
+        }
+        .header-top { display: flex; justify-content: space-between; align-items: center; }
+        .progress-bar {
+            height: 10px; background: #eee; border-radius: 5px; overflow: hidden; margin-top: 10px;
+        }
+        .progress-fill {
+            height: 100%; background: var(--success); width: 0%; transition: width 0.3s;
         }
 
-        h1 { margin: 0 0 15px 0; font-size: 1.5rem; text-align: center; color: var(--primary); }
+        /* --- Tabs Logic --- */
+        .tab-content { display: none; animation: fadeIn 0.3s; }
+        .tab-content.active { display: block; }
 
-        /* 進度條區域 */
-        .stats-panel {
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-        }
-
-        .challenge-status {
-            width: 100%;
-        }
-
-        .status-header {
+        /* --- Task Lists --- */
+        h3 { border-bottom: 2px solid #eee; padding-bottom: 5px; color: var(--primary); margin-top: 0;}
+        
+        .section-title {
+            font-size: 0.9rem;
+            color: #666;
+            margin: 20px 0 10px 0;
+            text-transform: uppercase;
+            letter-spacing: 1px;
             display: flex;
             justify-content: space-between;
-            font-size: 0.9rem;
-            margin-bottom: 5px;
-            font-weight: bold;
         }
 
-        .progress-bg {
-            background: #e0e0e0;
-            height: 12px;
-            border-radius: 6px;
-            overflow: hidden;
-        }
-
-        .progress-fill {
-            background: var(--success);
-            height: 100%;
-            width: 0%;
-            transition: width 0.4s ease, background-color 0.3s;
-        }
-
-        .action-area {
-            display: flex;
-            justify-content: center;
-            margin-top: 10px;
-        }
-
-        /* 按鈕樣式 */
-        .btn {
-            border: none;
-            padding: 10px 20px;
-            border-radius: 5px;
-            cursor: pointer;
-            font-weight: bold;
-            transition: opacity 0.2s, transform 0.1s;
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-        }
-        .btn:active { transform: scale(0.98); }
-        .btn:hover { opacity: 0.9; }
-        .primary-btn { background: var(--primary); color: white; box-shadow: 0 2px 4px rgba(79, 42, 147, 0.3); }
-        .secondary-btn { background: #e0e0e0; color: #333; }
-        .delete-btn { background: none; color: #ccc; padding: 5px; }
-        .delete-btn:hover { color: var(--danger); }
-
-        /* 任務列表 */
-        .task-list {
-            list-style: none;
-            padding: 0;
-            margin: 0;
-        }
-
+        .task-list { list-style: none; padding: 0; }
         .task-item {
             background: var(--card-bg);
-            margin-bottom: 10px;
-            padding: 15px;
-            border-radius: var(--border-radius);
+            padding: 12px;
+            margin-bottom: 8px;
+            border-radius: 8px;
             display: flex;
             align-items: center;
-            justify-content: space-between;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+            box-shadow: 0 1px 2px rgba(0,0,0,0.05);
             transition: all 0.2s;
-            border-left: 5px solid transparent; /* 預留邊框位置 */
+            border-left: 4px solid transparent;
         }
-
-        /* 🌟 挑戰任務樣式 */
-        .task-item.is-challenge {
-            border-left: 5px solid var(--accent);
-            background: #fffdf5;
-        }
-
-        .task-item.completed {
-            opacity: 0.6;
-            background: #f9f9f9;
-        }
-        .task-item.completed span {
-            text-decoration: line-through;
-            color: #888;
-        }
-
-        .task-content { flex-grow: 1; margin-left: 12px; }
         
-        .tag {
-            font-size: 0.7rem;
-            background: #eee;
-            padding: 2px 6px;
-            border-radius: 4px;
-            color: #666;
-            margin-right: 6px;
-            vertical-align: middle;
+        /* 長期任務樣式 */
+        .task-item.long-term { border-left-color: var(--primary); }
+        /* 短期任務樣式 */
+        .task-item.short-term { border-left-color: #aaa; }
+        /* 抽籤挑戰樣式 */
+        .task-item.gacha-task { border-left-color: var(--accent); background: #fffdf0; }
+        
+        .task-item.completed { opacity: 0.6; background: #f8f8f8; text-decoration: line-through; }
+        
+        .task-text { flex-grow: 1; margin-left: 10px; }
+        .task-tag { font-size: 0.7rem; padding: 2px 6px; background: #eee; border-radius: 4px; color: #666; margin-right: 5px; }
+
+        /* --- Gacha Page --- */
+        .gacha-container { text-align: center; padding: 40px 20px; }
+        .gacha-machine {
+            font-size: 5rem; color: var(--primary); margin-bottom: 20px;
+            animation: float 3s infinite ease-in-out;
+        }
+        .gacha-btn {
+            background: var(--accent); color: #8a5a00; font-size: 1.2rem;
+            padding: 15px 40px; border-radius: 50px; border: none;
+            box-shadow: 0 4px 0 #d49e3b; cursor: pointer; font-weight: bold;
+        }
+        .gacha-btn:active { transform: translateY(4px); box-shadow: none; }
+        
+        /* --- Bottom Nav --- */
+        .bottom-nav {
+            position: fixed; bottom: 0; left: 0; width: 100%;
+            height: var(--nav-height); background: white;
+            display: flex; justify-content: space-around; align-items: center;
+            box-shadow: 0 -2px 10px rgba(0,0,0,0.05);
+            z-index: 1000;
+        }
+        .nav-item {
+            flex: 1; text-align: center; color: #999; cursor: pointer;
+            font-size: 0.8rem; padding: 10px 0;
+        }
+        .nav-item i { display: block; font-size: 1.4rem; margin-bottom: 2px; }
+        .nav-item.active { color: var(--primary); }
+
+        /* --- Floating Input (Quick Add) --- */
+        .quick-add-bar {
+            position: fixed; bottom: 70px; left: 50%; transform: translateX(-50%);
+            width: 90%; max-width: 580px;
+            display: flex; gap: 10px;
+            background: rgba(255,255,255,0.9);
+            padding: 10px; border-radius: 10px;
+            backdrop-filter: blur(5px);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+        .quick-add-bar input {
+            flex-grow: 1; padding: 10px; border: 1px solid #ddd; border-radius: 5px;
         }
 
-        /* 輸入框區域 */
-        .input-group {
-            display: flex;
-            gap: 10px;
-            margin-top: 20px;
-            background: white;
-            padding: 15px;
-            border-radius: var(--border-radius);
-            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
-        }
-        .input-group input {
-            flex-grow: 1;
-            padding: 10px;
-            border: 1px solid #ddd;
-            border-radius: 5px;
-            outline: none;
-        }
-        .input-group input:focus { border-color: var(--primary); }
-
-        /* Empty State */
-        .empty-state {
-            text-align: center;
-            padding: 40px;
-            color: #888;
-        }
-        .empty-state i {
-            font-size: 3rem;
-            margin-bottom: 15px;
-            color: #ddd;
+        /* --- Settings Page --- */
+        .settings-list { list-style: none; padding: 0; }
+        .settings-item {
+            background: white; padding: 15px; border-bottom: 1px solid #eee;
+            display: flex; justify-content: space-between; align-items: center;
         }
 
-        /* Modal (彈出視窗) */
+        /* --- Modals & Animations --- */
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-10px); } }
+        @keyframes shake { 0% { transform: rotate(0deg); } 25% { transform: rotate(10deg); } 75% { transform: rotate(-10deg); } 100% { transform: rotate(0deg); } }
+        
         .modal-overlay {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.5);
-            display: none;
-            justify-content: center;
-            align-items: center;
-            z-index: 1000;
-            backdrop-filter: blur(2px);
+            background: rgba(0,0,0,0.6); display: none;
+            justify-content: center; align-items: center; z-index: 2000;
         }
         .modal {
-            background: white;
-            padding: 25px;
-            border-radius: var(--border-radius);
-            width: 90%;
-            max-width: 500px;
-            max-height: 80vh;
-            overflow-y: auto;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+            background: white; padding: 20px; border-radius: 10px; width: 85%; max-width: 400px;
+            text-align: center;
         }
-        .modal-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 20px;
-            border-bottom: 1px solid #eee;
-            padding-bottom: 10px;
-        }
-        .modal-header h2 { margin: 0; color: var(--primary); }
-        .close-btn {
-            background: none; border: none; font-size: 1.5rem; cursor: pointer; color: #888;
-        }
+        .btn { padding: 8px 16px; border: none; border-radius: 5px; cursor: pointer; }
+        .btn-danger { background: var(--danger); color: white; }
+        .btn-primary { background: var(--primary); color: white; }
+        .btn-outline { border: 1px solid #ccc; background: none; }
         
-        /* 挑戰卡片 */
-        .challenge-card {
-            border: 1px solid #eee;
-            padding: 15px;
-            margin-bottom: 15px;
-            border-radius: 8px;
-            transition: transform 0.2s, box-shadow 0.2s;
+        .gacha-result-card {
+            border: 2px solid var(--accent); background: #fffdf5; padding: 20px; margin-top: 20px;
+            border-radius: 10px; display: none; animation: fadeIn 0.5s;
         }
-        .challenge-card:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 4px 10px rgba(0,0,0,0.05);
-            border-color: var(--accent);
-        }
-        .challenge-card h4 { margin: 0 0 5px 0; color: var(--text-main); font-size: 1.1rem; }
-        .challenge-desc { font-size: 0.9rem; color: #666; margin-bottom: 10px; }
-        .challenge-meta { font-size: 0.8rem; color: #999; display: flex; align-items: center; gap: 5px; }
 
     </style>
 </head>
@@ -236,276 +172,354 @@
 
     <div class="container">
         <header>
-            <h1><i class="fas fa-dungeon"></i> Life Quest Dashboard</h1>
-            
-            <div class="stats-panel">
-                <div class="challenge-status">
-                    <div class="status-header">
-                        <span id="challenge-label">挑戰進度</span>
-                        <span id="challenge-percent">0%</span>
-                    </div>
-                    <div class="progress-bg">
-                        <div id="challenge-progress-bar" class="progress-fill"></div>
-                    </div>
+            <div class="header-top">
+                <div style="font-weight: bold; color: var(--primary);">
+                    <i class="fas fa-dragon"></i> Life Dashboard
                 </div>
-                
-                <div class="action-area">
-                    <button id="open-market-btn" class="btn primary-btn">
-                        <i class="fas fa-scroll"></i> 接受新挑戰
-                    </button>
-                </div>
+                <button onclick="startCooldown()" class="btn btn-danger" style="font-size: 0.8rem;">
+                    <i class="fas fa-fire"></i> 冷靜模式
+                </button>
+            </div>
+            <div class="progress-bar">
+                <div id="main-progress" class="progress-fill"></div>
+            </div>
+            <div style="text-align: right; font-size: 0.75rem; color: #888; margin-top: 5px;">
+                自由心證進度: <span id="progress-text">0%</span>
             </div>
         </header>
 
-        <main>
-            <ul id="task-list" class="task-list">
+        <div id="tab-dashboard" class="tab-content active">
+            
+            <div class="section-title">
+                <span><i class="fas fa-infinity"></i> 長期修煉 (Routine)</span>
+                <small onclick="switchTab('settings')" style="cursor:pointer; color:var(--primary)">管理設定 ></small>
+            </div>
+            <ul id="long-term-list" class="task-list">
+                </ul>
+            <div id="long-term-empty" style="text-align:center; color:#999; font-size:0.8rem; display:none;">
+                尚無修煉項目，請至設定頁新增
+            </div>
+
+            <div class="section-title">
+                <span><i class="fas fa-bolt"></i> 短期任務 (To-Do)</span>
+            </div>
+            <ul id="short-term-list" class="task-list">
                 </ul>
             
-            <div id="empty-state" class="empty-state" style="display:none;">
-                <i class="fas fa-clipboard-check"></i>
-                <p>目前沒有任務，去接個挑戰或是新增一項吧！</p>
+            <div class="quick-add-bar">
+                <input type="text" id="quick-input" placeholder="新增一個短期任務..." onkeypress="handleQuickAdd(event)">
+                <button onclick="addShortTermTask()" class="btn btn-primary"><i class="fas fa-plus"></i></button>
             </div>
-        </main>
-
-        <div class="input-group">
-            <input type="text" id="new-task-input" placeholder="輸入雜項任務名稱..." onkeypress="handleEnter(event)">
-            <button onclick="addManualTask()" class="btn secondary-btn">
-                <i class="fas fa-plus"></i> 新增
-            </button>
         </div>
+
+        <div id="tab-gacha" class="tab-content">
+            <div class="gacha-container">
+                <h2>命運抽籤</h2>
+                <p style="color:#666; margin-bottom: 30px;">不知道該做什麼？讓命運決定你的下一個挑戰。</p>
+                
+                <div id="gacha-icon" class="gacha-machine">
+                    <i class="fas fa-gift"></i>
+                </div>
+                
+                <button onclick="playGacha()" class="gacha-btn">開始抽取</button>
+
+                <div id="gacha-result" class="gacha-result-card">
+                    <h3 id="gacha-title" style="color:var(--primary)"></h3>
+                    <p id="gacha-desc"></p>
+                    <button onclick="acceptGacha()" class="btn btn-primary" style="margin-top:10px;">接受挑戰 (加入清單)</button>
+                    <button onclick="closeGachaResult()" class="btn btn-outline" style="margin-top:10px;">再來一次</button>
+                </div>
+            </div>
+        </div>
+
+        <div id="tab-settings" class="tab-content">
+            <div class="section-title">
+                <span>長期任務設定</span>
+            </div>
+            <div style="background: white; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
+                <p style="font-size: 0.9rem; color:#666;">在此設定你的習慣或每日任務模板，點擊「部署」將其加入今日儀表板。</p>
+                <div style="display:flex; gap:10px;">
+                    <input type="text" id="setting-input" placeholder="輸入新的長期習慣..." style="flex:1; padding:8px; border:1px solid #ddd; border-radius:4px;">
+                    <button onclick="addSettingTemplate()" class="btn btn-primary">新增</button>
+                </div>
+            </div>
+
+            <ul id="settings-list" class="settings-list">
+                </ul>
+            
+            <div style="text-align: center; margin-top: 20px;">
+                <button onclick="deployLongTermTasks()" class="btn btn-primary" style="width: 100%; padding: 12px;">
+                    <i class="fas fa-sync-alt"></i> 全部部署到儀表板
+                </button>
+            </div>
+        </div>
+
     </div>
 
-    <div id="modal-overlay" class="modal-overlay">
+    <nav class="bottom-nav">
+        <div class="nav-item active" onclick="switchTab('dashboard')">
+            <i class="fas fa-list-ul"></i> 儀表板
+        </div>
+        <div class="nav-item" onclick="switchTab('gacha')">
+            <i class="fas fa-dice-d20"></i> 挑戰抽籤
+        </div>
+        <div class="nav-item" onclick="switchTab('settings')">
+            <i class="fas fa-cog"></i> 設定
+        </div>
+    </nav>
+
+    <div id="cooldown-modal" class="modal-overlay" style="background: rgba(200, 50, 50, 0.95);">
         <div class="modal">
-            <div class="modal-header">
-                <h2>🛡️ 挑戰市集</h2>
-                <button onclick="closeModal()" class="close-btn">&times;</button>
-            </div>
-            <div id="challenge-list" class="modal-body">
-                </div>
+            <h2 style="color: var(--danger);">🔥 系統過熱</h2>
+            <div id="timer-display" style="font-size: 3rem; font-weight: bold; margin: 20px 0;">03:00</div>
+            <textarea id="anger-log" placeholder="在此宣洩情緒 (不會保存)..." style="width: 100%; height: 100px; padding: 10px;"></textarea>
+            <button onclick="stopCooldown()" id="stop-cooldown-btn" class="btn btn-outline" disabled style="margin-top: 15px; width: 100%; color: white; border-color: white;">冷卻中...</button>
         </div>
     </div>
 
     <script>
-        /* --- 程式邏輯區 (JavaScript) --- */
-
-        // 1. 定義你的挑戰 (可以在這裡自由新增)
-        const challenges = [
-            {
-                id: "code-refactor",
-                title: "🧹 Clean Code 週末",
-                description: "還清技術債，讓程式碼閃閃發光",
-                tasks: [
-                    { text: "移除未使用的 import", tag: "Refactor" },
-                    { text: "將 >50 行的函式拆分", tag: "Refactor" },
-                    { text: "為核心模組補上註解", tag: "Docs" },
-                    { text: "閱讀 1 章 Clean Code", tag: "Study" }
-                ]
-            },
-            {
-                id: "workout-week",
-                title: "💪 斯巴達健身週",
-                description: "不需要健身房，在家也能變強",
-                tasks: [
-                    { text: "伏地挺身 20 下", tag: "Body" },
-                    { text: "深蹲 30 下", tag: "Legs" },
-                    { text: "平板支撐 1 分鐘", tag: "Core" },
-                    { text: "喝水 2500cc", tag: "Health" }
-                ]
-            },
-            {
-                id: "maple-boss",
-                title: "🍄 楓之谷攻略組",
-                description: "為了擊敗黑魔法師做準備",
-                tasks: [
-                    { text: "領取每日登入獎勵", tag: "Game" },
-                    { text: "完成每日 Arcane Symbol", tag: "Daily" },
-                    { text: "檢查公會技能冷卻", tag: "Buff" }
-                ]
-            }
+        /* --- Data & State --- */
+        let tasks = JSON.parse(localStorage.getItem('myTasks')) || [];
+        
+        // 長期任務的模板 (存在這裡，不直接顯示在 Task List，除非被部署)
+        let longTermTemplates = JSON.parse(localStorage.getItem('longTermTemplates')) || [
+            { text: "閱讀 30 分鐘", tag: "Learning" },
+            { text: "運動/伸展", tag: "Health" },
+            { text: "整理桌面", tag: "Clean" }
         ];
 
-        // 2. 狀態管理
-        let myTasks = JSON.parse(localStorage.getItem('myTasks')) || [];
+        // 轉蛋池 (有趣的挑戰)
+        const gachaPool = [
+            { title: "🧪 Beta 測試員", desc: "分享一首冷門音樂到社群，並觀察反應 (不帶情緒)" },
+            { title: "🧹 Code Review", desc: "打開一個舊專案，重構一個函式" },
+            { title: "📵 數位排毒", desc: "接下來 1 小時不看手機社群軟體" },
+            { title: "💧 水之呼吸", desc: "立刻去喝 500cc 的水" },
+            { title: "🧘 冥想時刻", desc: "閉上眼睛，什麼都不做 2 分鐘" },
+            { title: "📝 寫下情緒", desc: "在筆記本寫下目前的一個焦慮，然後劃掉它" }
+        ];
 
-        // 初始化
+        let currentGachaResult = null;
+
+        /* --- Initialization --- */
         document.addEventListener('DOMContentLoaded', () => {
             renderTasks();
-            setupModal();
+            renderSettingsList();
         });
 
-        // 3. 渲染畫面
+        /* --- Tab Switching --- */
+        function switchTab(tabName) {
+            // Hide all tabs
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+            document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+            
+            // Show target
+            document.getElementById(`tab-${tabName}`).classList.add('active');
+            
+            // Highlight nav (simple logic)
+            const navIndex = ['dashboard', 'gacha', 'settings'].indexOf(tabName);
+            document.querySelectorAll('.nav-item')[navIndex].classList.add('active');
+        }
+
+        /* --- Core Task Logic --- */
         function renderTasks() {
-            const list = document.getElementById('task-list');
-            const emptyState = document.getElementById('empty-state');
+            const longList = document.getElementById('long-term-list');
+            const shortList = document.getElementById('short-term-list');
+            const longEmpty = document.getElementById('long-term-empty');
             
-            list.innerHTML = ''; 
-
-            if (myTasks.length === 0) {
-                emptyState.style.display = 'block';
-            } else {
-                emptyState.style.display = 'none';
-                
-                myTasks.forEach(task => {
-                    const li = document.createElement('li');
-                    // 根據是否為挑戰任務給予不同 class
-                    li.className = `task-item ${task.completed ? 'completed' : ''} ${task.isChallenge ? 'is-challenge' : ''}`;
-                    
-                    li.innerHTML = `
-                        <div style="display:flex; align-items:center; flex-grow:1;">
-                            <input type="checkbox" 
-                                style="transform: scale(1.2); cursor:pointer;"
-                                ${task.completed ? 'checked' : ''} 
-                                onchange="toggleTask('${task.id}')">
-                            
-                            <div class="task-content">
-                                ${task.tag ? `<span class="tag">${task.tag}</span>` : ''}
-                                <span>${task.text}</span>
-                                ${task.challengeName ? `<div style="font-size:0.75rem; color:#999; margin-top:2px;">來自: ${task.challengeName}</div>` : ''}
-                            </div>
-                        </div>
-                        
-                        <button class="delete-btn" onclick="deleteTask('${task.id}')" title="刪除任務">
-                            <i class="fas fa-trash"></i>
-                        </button>
-                    `;
-                    list.appendChild(li);
-                });
-            }
+            longList.innerHTML = '';
+            shortList.innerHTML = '';
             
-            updateProgress();
-        }
+            let hasLongTerm = false;
+            let totalTasks = tasks.length;
+            let completedTasks = tasks.filter(t => t.completed).length;
 
-        // 4. 核心：接受挑戰
-        function activateChallenge(challengeId) {
-            const selected = challenges.find(c => c.id === challengeId);
-            if (!selected) return;
+            tasks.forEach(task => {
+                const li = document.createElement('li');
+                li.className = `task-item ${task.type} ${task.completed ? 'completed' : ''}`;
+                li.innerHTML = `
+                    <input type="checkbox" ${task.completed ? 'checked' : ''} onchange="toggleTask('${task.id}')" style="transform:scale(1.3); cursor:pointer;">
+                    <div class="task-text">
+                        ${task.tag ? `<span class="task-tag">${task.tag}</span>` : ''}
+                        <span>${task.text}</span>
+                    </div>
+                    <i class="fas fa-times" onclick="deleteTask('${task.id}')" style="color:#ccc; cursor:pointer; padding:5px;"></i>
+                `;
 
-            // 將挑戰內容複製進任務列表
-            const newTasks = selected.tasks.map(t => ({
-                id: Date.now() + Math.random().toString(36).substr(2, 9),
-                text: t.text,
-                tag: t.tag,
-                completed: false,
-                isChallenge: true, // 標記為挑戰任務
-                challengeName: selected.title
-            }));
-
-            myTasks = [...myTasks, ...newTasks];
-            save();
-            renderTasks();
-            closeModal();
-            // 簡單的視覺回饋
-            alert(`⚔️ 挑戰開始：${selected.title}！`);
-        }
-
-        // 5. CRUD 操作
-        function addManualTask() {
-            const input = document.getElementById('new-task-input');
-            const text = input.value.trim();
-            if (!text) return;
-
-            myTasks.push({
-                id: Date.now().toString(),
-                text: text,
-                completed: false,
-                isChallenge: false 
+                if (task.type === 'long-term') {
+                    longList.appendChild(li);
+                    hasLongTerm = true;
+                } else {
+                    shortList.appendChild(li);
+                }
             });
+
+            longEmpty.style.display = hasLongTerm ? 'none' : 'block';
             
-            input.value = '';
-            save();
+            // Update Progress
+            const percent = totalTasks === 0 ? 0 : Math.round((completedTasks / totalTasks) * 100);
+            document.getElementById('main-progress').style.width = `${percent}%`;
+            document.getElementById('progress-text').innerText = `${completedTasks}/${totalTasks} (${percent}%)`;
+        }
+
+        function addTask(text, type, tag = "") {
+            const newTask = {
+                id: Date.now() + Math.random().toString(36).substr(2, 5),
+                text: text,
+                type: type, // 'long-term', 'short-term', 'gacha-task'
+                tag: tag,
+                completed: false
+            };
+            tasks.push(newTask);
+            saveTasks();
             renderTasks();
         }
 
-        function handleEnter(e) {
-            if (e.key === 'Enter') addManualTask();
+        // 短期任務 (底部輸入框)
+        function handleQuickAdd(e) {
+            if (e.key === 'Enter') addShortTermTask();
+        }
+        function addShortTermTask() {
+            const input = document.getElementById('quick-input');
+            if (input.value.trim()) {
+                addTask(input.value.trim(), 'short-term', 'ToDo');
+                input.value = '';
+                // 視覺回饋：如果不在 Dashboard，自動切換回去
+                switchTab('dashboard');
+            }
         }
 
         function toggleTask(id) {
-            const task = myTasks.find(t => t.id === id);
+            const task = tasks.find(t => t.id === id);
             if (task) {
                 task.completed = !task.completed;
-                save();
+                saveTasks();
                 renderTasks();
             }
         }
 
         function deleteTask(id) {
-            if(!confirm("確定要刪除嗎？")) return;
-            myTasks = myTasks.filter(t => t.id !== id);
-            save();
-            renderTasks();
-        }
-
-        function save() {
-            localStorage.setItem('myTasks', JSON.stringify(myTasks));
-        }
-
-        // 6. 進度條邏輯
-        function updateProgress() {
-            // 只計算挑戰任務
-            const challengeTasks = myTasks.filter(t => t.isChallenge);
-            const total = challengeTasks.length;
-            const completed = challengeTasks.filter(t => t.completed).length;
-
-            const label = document.getElementById('challenge-label');
-            const percentText = document.getElementById('challenge-percent');
-            const bar = document.getElementById('challenge-progress-bar');
-
-            if (total === 0) {
-                label.innerText = "目前無進行中的挑戰";
-                percentText.innerText = "0%";
-                bar.style.width = "0%";
-                bar.style.backgroundColor = "#e0e0e0";
-            } else {
-                const percent = Math.round((completed / total) * 100);
-                label.innerText = `挑戰進度 (${completed}/${total})`;
-                percentText.innerText = `${percent}%`;
-                bar.style.width = `${percent}%`;
-                
-                if (percent === 100) {
-                    bar.style.backgroundColor = "#ffbe5c"; // 金色
-                } else {
-                    bar.style.backgroundColor = "#4caf50"; // 綠色
-                }
+            if (confirm('確定刪除此任務？')) {
+                tasks = tasks.filter(t => t.id !== id);
+                saveTasks();
+                renderTasks();
             }
         }
 
-        // 7. Modal 控制
-        function setupModal() {
-            const modal = document.getElementById('modal-overlay');
-            const btn = document.getElementById('open-market-btn');
-            const list = document.getElementById('challenge-list');
-
-            btn.onclick = () => {
-                modal.style.display = 'flex';
-                list.innerHTML = challenges.map(c => `
-                    <div class="challenge-card">
-                        <div style="display:flex; justify-content:space-between; align-items:start;">
-                            <div>
-                                <h4>${c.title}</h4>
-                                <div class="challenge-desc">${c.description}</div>
-                                <div class="challenge-meta">
-                                    <i class="fas fa-list-ul"></i> ${c.tasks.length} 個任務
-                                </div>
-                            </div>
-                            <button class="btn secondary-btn" onclick="activateChallenge('${c.id}')">
-                                接受
-                            </button>
-                        </div>
-                    </div>
-                `).join('');
-            };
+        function saveTasks() {
+            localStorage.setItem('myTasks', JSON.stringify(tasks));
         }
 
-        function closeModal() {
-            document.getElementById('modal-overlay').style.display = 'none';
+        /* --- Settings & Long-term Logic --- */
+        function renderSettingsList() {
+            const list = document.getElementById('settings-list');
+            list.innerHTML = '';
+            longTermTemplates.forEach((item, index) => {
+                const li = document.createElement('li');
+                li.className = 'settings-item';
+                li.innerHTML = `
+                    <span>${item.text} <small style="color:#999">(${item.tag})</small></span>
+                    <button onclick="removeTemplate(${index})" class="btn btn-outline" style="padding:2px 8px; font-size:0.8rem;">刪除</button>
+                `;
+                list.appendChild(li);
+            });
         }
 
-        window.onclick = function(event) {
-            const modal = document.getElementById('modal-overlay');
-            if (event.target == modal) closeModal();
+        function addSettingTemplate() {
+            const input = document.getElementById('setting-input');
+            if (input.value.trim()) {
+                longTermTemplates.push({ text: input.value.trim(), tag: 'Routine' });
+                localStorage.setItem('longTermTemplates', JSON.stringify(longTermTemplates));
+                input.value = '';
+                renderSettingsList();
+            }
         }
+
+        function removeTemplate(index) {
+            longTermTemplates.splice(index, 1);
+            localStorage.setItem('longTermTemplates', JSON.stringify(longTermTemplates));
+            renderSettingsList();
+        }
+
+        function deployLongTermTasks() {
+            // 將所有設定中的模板加入 Dashboard
+            longTermTemplates.forEach(template => {
+                addTask(template.text, 'long-term', template.tag);
+            });
+            alert('已將長期修煉項目加入今日清單！');
+            switchTab('dashboard');
+        }
+
+        /* --- Gacha Logic --- */
+        function playGacha() {
+            const icon = document.getElementById('gacha-icon');
+            const resultCard = document.getElementById('gacha-result');
+            
+            // Reset UI
+            resultCard.style.display = 'none';
+            icon.style.animation = 'shake 0.5s infinite'; // Shake it!
+            
+            setTimeout(() => {
+                icon.style.animation = 'float 3s infinite ease-in-out'; // Stop shaking
+                
+                // Draw random
+                const random = gachaPool[Math.floor(Math.random() * gachaPool.length)];
+                currentGachaResult = random;
+                
+                document.getElementById('gacha-title').innerText = random.title;
+                document.getElementById('gacha-desc').innerText = random.desc;
+                resultCard.style.display = 'block';
+                
+            }, 1000); // 1 second animation
+        }
+
+        function acceptGacha() {
+            if (currentGachaResult) {
+                addTask(currentGachaResult.title + ": " + currentGachaResult.desc, 'gacha-task', 'Challenge');
+                alert('已接受挑戰！');
+                switchTab('dashboard');
+                closeGachaResult();
+            }
+        }
+        
+        function closeGachaResult() {
+            document.getElementById('gacha-result').style.display = 'none';
+        }
+
+        /* --- Cooldown Logic (保留功能) --- */
+        let cooldownTimer = null;
+        function startCooldown() {
+            const modal = document.getElementById('cooldown-modal');
+            const btn = document.getElementById('stop-cooldown-btn');
+            modal.style.display = 'flex';
+            
+            let timeLeft = 180; 
+            updateTimerDisplay(timeLeft);
+            
+            btn.disabled = true;
+            btn.innerText = "冷卻中...";
+            
+            cooldownTimer = setInterval(() => {
+                timeLeft--;
+                updateTimerDisplay(timeLeft);
+                if (timeLeft <= 0) {
+                    clearInterval(cooldownTimer);
+                    btn.disabled = false;
+                    btn.innerText = "完成冷卻 (離開)";
+                }
+            }, 1000);
+        }
+
+        function updateTimerDisplay(seconds) {
+            const m = Math.floor(seconds / 60).toString().padStart(2, '0');
+            const s = (seconds % 60).toString().padStart(2, '0');
+            document.getElementById('timer-display').innerText = `${m}:${s}`;
+        }
+
+        function stopCooldown() {
+            document.getElementById('cooldown-modal').style.display = 'none';
+            clearInterval(cooldownTimer);
+        }
+
     </script>
 </body>
 </html>
