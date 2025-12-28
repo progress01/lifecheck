@@ -3,104 +3,143 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Life Quest v8.0</title>
+    <title>Mind Sanctuary v10: Magnum Opus</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
+        /* =========================================
+           1. CORE STYLES & VARIABLES
+           ========================================= */
         :root {
-            --primary: #2c3e50; --accent: #e67e22; 
+            --primary: #2c3e50; --accent: #e67e22; --danger: #c0392b; --success: #27ae60;
             --habit: #f1c40f; --daily: #3498db; --todo: #e67e22;
-            --bg: #dfe6e9; --text: #2d3436;
-            --glass: rgba(255, 255, 255, 0.95);
-            --radius: 12px;
+            --bg-glass: rgba(255, 255, 255, 0.94);
+            --nav-h: calc(65px + env(safe-area-inset-bottom, 20px));
+            --radius: 16px;
+            --shadow: 0 4px 20px rgba(0,0,0,0.1);
         }
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; user-select: none; }
-        body { margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: var(--bg); color: var(--text); overflow-x: hidden; }
-
-        /* --- 1. OPTIMIZED CANVAS (Background) --- */
-        #world {
-            position: fixed; top: 0; left: 0; width: 100%; height: 45vh; z-index: 0;
-            background: linear-gradient(to bottom, #89f7fe, #66a6ff); /* Static CSS gradient is faster than Canvas gradient */
+        body { 
+            margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; 
+            background: #1a1a1a; color: var(--primary); overflow: hidden; height: 100vh; 
         }
 
-        /* --- 2. LAYOUT --- */
-        .app-layout { position: relative; z-index: 10; min-height: 100vh; display: flex; flex-direction: column; }
-        
-        /* Spacer to show the tower */
-        .tower-view { height: 40vh; transition: height 0.3s; cursor: pointer; }
-        .tower-view.collapsed { height: 10vh; }
+        /* =========================================
+           2. VISUAL LAYERS
+           ========================================= */
+        /* Canvas runs behind everything */
+        #world { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 0; pointer-events: none; }
 
+        /* App Layout */
+        .app-layout { position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: flex; flex-direction: column; z-index: 10; }
+        
+        /* The Spacer (Transparent area to see the tower) */
+        .header-spacer { 
+            flex: 0 0 40vh; transition: flex 0.5s cubic-bezier(0.2, 0.8, 0.2, 1); cursor: pointer; 
+            position: relative;
+        }
+        .header-spacer::after {
+            content: '點擊切換視角'; position: absolute; bottom: 10px; left: 50%; transform: translateX(-50%);
+            color: rgba(255,255,255,0.6); font-size: 0.8rem; opacity: 0; transition: 0.3s;
+        }
+        .header-spacer:hover::after { opacity: 1; }
+        .header-spacer.collapsed { flex: 0 0 10vh; }
+
+        /* Main UI Sheet */
         .main-sheet {
-            flex: 1; background: var(--glass); 
+            flex: 1; background: var(--bg-glass); backdrop-filter: blur(15px);
             border-top-left-radius: 24px; border-top-right-radius: 24px;
-            padding: 20px; box-shadow: 0 -5px 20px rgba(0,0,0,0.1);
-            min-height: 60vh;
+            box-shadow: 0 -10px 40px rgba(0,0,0,0.15);
+            padding: 20px; padding-bottom: calc(var(--nav-h) + 20px);
+            overflow-y: auto; scroll-behavior: smooth; transition: transform 0.3s;
         }
 
-        /* --- 3. PROFILE & BADGES (New Feature) --- */
+        /* =========================================
+           3. UI COMPONENTS
+           ========================================= */
+        /* Header Stats */
         .profile-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 20px; }
-        .stats-box { flex: 1; }
-        .stats-title { font-size: 0.8rem; color: #7f8c8d; text-transform: uppercase; letter-spacing: 1px; }
+        .stats-title { font-size: 0.7rem; color: #7f8c8d; text-transform: uppercase; letter-spacing: 1px; }
         .stats-number { font-size: 2rem; font-weight: 800; color: var(--primary); }
-        
-        .badge-rack { 
-            display: flex; gap: 5px; background: rgba(0,0,0,0.05); padding: 5px; border-radius: 20px; 
-        }
-        .badge { 
-            width: 30px; height: 30px; border-radius: 50%; background: #ccc; 
-            display: flex; justify-content: center; align-items: center; font-size: 1rem;
-            filter: grayscale(100%); opacity: 0.5; transition: all 0.5s;
-        }
-        .badge.unlocked { filter: grayscale(0%); opacity: 1; background: white; box-shadow: 0 2px 5px rgba(0,0,0,0.1); transform: scale(1.1); }
+        .badge-rack { display: flex; gap: 5px; background: rgba(0,0,0,0.05); padding: 5px; border-radius: 20px; }
+        .badge { width: 30px; height: 30px; border-radius: 50%; background: #ccc; display: flex; justify-content: center; align-items: center; font-size: 1rem; filter: grayscale(100%); opacity: 0.5; transition: 0.5s; box-shadow: inset 0 -2px 5px rgba(0,0,0,0.1); }
+        .badge.unlocked { filter: grayscale(0%); opacity: 1; background: white; transform: scale(1.1); box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
 
-        /* --- 4. DASHBOARD GRID (v7.0 Layout) --- */
+        /* Lore Card */
+        .lore-card {
+            background: #fff; border-left: 4px solid var(--daily); padding: 15px; border-radius: 12px;
+            margin-bottom: 20px; cursor: pointer; box-shadow: 0 2px 8px rgba(0,0,0,0.05); transition: 0.2s;
+        }
+        .lore-card:active { transform: scale(0.98); }
+        .lore-title { font-weight: bold; font-size: 0.95rem; margin-bottom: 5px; color: var(--primary); display:flex; justify-content:space-between; }
+        .lore-desc { font-size: 0.9rem; color: #666; line-height: 1.5; white-space: pre-wrap; }
+
+        /* Dashboard Grid */
         .grid-board { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 15px; }
-        .col-card { background: #f1f2f6; padding: 10px; border-radius: var(--radius); }
-        .col-header { display: flex; justify-content: space-between; font-weight: bold; color: #636e72; padding: 5px; font-size: 0.9rem; }
+        .col-card { background: #f1f2f6; padding: 10px; border-radius: var(--radius); border: 1px solid rgba(0,0,0,0.05); }
+        .col-header { display: flex; justify-content: space-between; font-weight: bold; color: #636e72; padding: 5px 5px 10px 5px; font-size: 0.85rem; text-transform: uppercase; }
         
+        /* Task Items */
         .task-list { list-style: none; padding: 0; margin: 0; }
         .task-item {
-            background: white; padding: 12px; margin-bottom: 8px; border-radius: 8px;
-            display: flex; align-items: center; box-shadow: 0 1px 3px rgba(0,0,0,0.05);
-            border-left: 4px solid transparent; transition: 0.2s;
+            background: white; padding: 12px; margin-bottom: 8px; border-radius: 10px;
+            display: flex; align-items: center; position: relative;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.03); border-left: 4px solid transparent;
+            transition: all 0.2s;
         }
-        .type-habit { border-left-color: var(--habit); }
-        .type-daily { border-left-color: var(--daily); }
-        .type-todo { border-left-color: var(--todo); }
+        .type-habit { border-left-color: var(--habit); } .type-daily { border-left-color: var(--daily); } .type-todo { border-left-color: var(--todo); }
         
-        .check-box { width: 20px; height: 20px; background: #eee; border-radius: 4px; margin-right: 10px; cursor: pointer; flex-shrink: 0; }
-        .type-habit .check-box { background: var(--habit); }
-        .task-item.done { opacity: 0.5; text-decoration: line-through; }
-        .task-content { flex: 1; font-size: 0.95rem; cursor: pointer; }
-        .task-desc { font-size: 0.8rem; color: #999; display: none; margin-top: 4px; border-top: 1px dashed #eee; padding-top: 4px; }
+        .check-box { width: 24px; height: 24px; background: #eee; border-radius: 6px; margin-right: 12px; cursor: pointer; flex-shrink: 0; display: flex; justify-content: center; align-items: center; color: white; font-weight: bold; font-size: 0.8rem; transition: 0.2s; }
+        .check-box:active { transform: scale(0.8); }
+        .type-habit .check-box { background: var(--habit); } .type-habit .check-box::after { content: '+'; }
+        
+        .task-item.done { opacity: 0.6; background: #f8f9fa; }
+        .task-item.done .task-title { text-decoration: line-through; color: #999; }
+        .type-todo.done .check-box { background: var(--todo); } .type-todo.done .check-box::after { content: '✔'; }
+        .type-daily.done .check-box { background: #bdc3c7; }
+
+        .task-content { flex: 1; min-width: 0; cursor: pointer; }
+        .task-title { font-size: 0.95rem; font-weight: 600; margin-bottom: 2px; }
+        .task-desc { font-size: 0.8rem; color: #999; display: none; padding-top: 5px; border-top: 1px dashed #eee; margin-top: 5px; line-height: 1.4;}
         .task-item.expanded .task-desc { display: block; }
 
-        /* --- 5. MODALS & FAB --- */
-        .fab {
-            position: fixed; bottom: 30px; right: 20px; width: 56px; height: 56px;
-            background: var(--primary); color: white; border-radius: 50%;
-            display: flex; justify-content: center; align-items: center; font-size: 1.5rem;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.3); z-index: 100; cursor: pointer;
-        }
-        .modal-overlay {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5);
-            z-index: 2000; display: none; justify-content: center; align-items: center; padding: 20px;
-        }
-        .modal { background: white; width: 100%; max-width: 400px; padding: 25px; border-radius: 16px; }
-        .input-box { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px; margin-bottom: 10px; font-size: 1rem; }
-        .type-select { display: flex; gap: 5px; margin-bottom: 15px; }
-        .type-opt { flex: 1; padding: 8px; text-align: center; border: 1px solid #ddd; border-radius: 6px; cursor: pointer; font-size: 0.9rem; }
-        .type-opt.active { background: var(--primary); color: white; border-color: var(--primary); }
-        .btn-block { width: 100%; padding: 12px; background: var(--primary); color: white; border: none; border-radius: 8px; font-size: 1rem; }
+        /* Other Tabs */
+        .tab-content { display: none; animation: slideUp 0.4s cubic-bezier(0.2, 0.8, 0.2, 1); }
+        .tab-content.active { display: block; }
+        @keyframes slideUp { from { opacity:0; transform:translateY(20px); } to { opacity:1; transform:translateY(0); } }
 
-        /* Achievement Toast */
-        .toast {
-            position: fixed; top: 20px; left: 50%; transform: translateX(-50%) translateY(-100px);
-            background: #27ae60; color: white; padding: 10px 20px; border-radius: 30px;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.2); z-index: 3000; transition: transform 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-            display: flex; align-items: center; gap: 10px;
-        }
+        .void-box { background: #2d3436; color: #dfe6e9; padding: 30px; border-radius: 16px; text-align: center; position: relative; overflow: hidden; box-shadow: inset 0 0 30px rgba(0,0,0,0.5); }
+        .focus-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(44,62,80,0.98); z-index: 3000; display: none; flex-direction: column; justify-content: center; align-items: center; color: white; backdrop-filter: blur(10px); }
+
+        /* Buttons & Inputs */
+        h2 { font-size: 0.9rem; color: #95a5a6; text-transform: uppercase; letter-spacing: 1px; margin: 25px 0 10px 0; border-bottom: 1px solid #eee; padding-bottom: 5px; display:flex; justify-content:space-between; }
+        .btn { border: none; padding: 10px 20px; border-radius: 10px; font-weight: bold; cursor: pointer; font-size: 0.9rem; display: inline-flex; align-items: center; gap: 6px; transition: 0.1s; }
+        .btn:active { transform: scale(0.95); }
+        .btn-primary { background: var(--primary); color: white; box-shadow: 0 4px 10px rgba(44,62,80,0.3); }
+        .btn-ghost { background: transparent; color: #aaa; border: 1px solid #ddd; font-size: 0.8rem; padding: 5px 10px; }
+        .btn-danger { background: #ffeaa7; color: #d63031; border: 1px solid #d63031; }
+        .input-box { width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 10px; background: white; font-size: 1rem; margin-bottom: 15px; }
+
+        /* FAB & Modal */
+        .fab { position: fixed; bottom: calc(var(--nav-h) + 25px); right: 25px; width: 60px; height: 60px; background: var(--primary); color: white; border-radius: 50%; display: flex; justify-content: center; align-items: center; font-size: 1.6rem; box-shadow: 0 5px 15px rgba(0,0,0,0.3); z-index: 100; cursor: pointer; transition: transform 0.2s; }
+        .fab:hover { transform: scale(1.1); } .fab:active { transform: rotate(90deg); }
+
+        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 2000; display: none; justify-content: center; align-items: center; padding: 20px; backdrop-filter: blur(5px); }
+        .modal { background: white; width: 100%; max-width: 420px; padding: 25px; border-radius: 20px; box-shadow: 0 20px 50px rgba(0,0,0,0.3); animation: popIn 0.3s; }
+        @keyframes popIn { from { transform: scale(0.9); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+
+        .type-select { display: flex; gap: 8px; margin-bottom: 20px; }
+        .type-opt { flex: 1; padding: 10px; text-align: center; border: 1px solid #ddd; border-radius: 8px; cursor: pointer; font-size: 0.9rem; font-weight: bold; color: #888; transition: 0.2s; }
+        .type-opt.active[data-t="habit"] { background: #fff8e1; color: var(--habit); border-color: var(--habit); }
+        .type-opt.active[data-t="daily"] { background: #e3f2fd; color: var(--daily); border-color: var(--daily); }
+        .type-opt.active[data-t="todo"] { background: #fff3e0; color: var(--todo); border-color: var(--todo); }
+
+        .nav { position: fixed; bottom: 0; left: 0; width: 100%; height: var(--nav-h); background: rgba(255,255,255,0.95); backdrop-filter: blur(10px); display: flex; justify-content: space-around; padding-top: 12px; box-shadow: 0 -5px 15px rgba(0,0,0,0.05); z-index: 90; }
+        .nav-item { text-align: center; color: #bdc3c7; font-size: 0.7rem; cursor: pointer; width: 50px; transition: 0.2s; }
+        .nav-item i { display: block; font-size: 1.4rem; margin-bottom: 4px; }
+        .nav-item.active { color: var(--primary); transform: translateY(-4px); }
+
+        .toast { position: fixed; top: 30px; left: 50%; transform: translateX(-50%) translateY(-100px); background: var(--primary); color: white; padding: 12px 25px; border-radius: 50px; box-shadow: 0 10px 30px rgba(0,0,0,0.2); z-index: 3000; transition: transform 0.5s cubic-bezier(0.68, -0.55, 0.27, 1.55); display: flex; align-items: center; gap: 10px; font-weight: bold; }
         .toast.show { transform: translateX(-50%) translateY(0); }
-
     </style>
 </head>
 <body>
@@ -108,55 +147,107 @@
     <canvas id="world"></canvas>
 
     <div class="app-layout">
-        <div class="tower-view" onclick="this.classList.toggle('collapsed'); app.drawTower();"></div>
+        <div class="header-spacer" id="tower-trigger" onclick="app.toggleView()"></div>
         
         <div class="main-sheet">
             
-            <div class="profile-header">
-                <div class="stats-box">
-                    <div class="stats-title">生涯累積 (LEGACY)</div>
-                    <div class="stats-number" id="legacy-count">0</div>
-                </div>
-                <div class="badge-rack" id="badge-rack">
+            <div id="tab-home" class="tab-content active">
+                <div class="profile-header">
+                    <div>
+                        <div class="stats-title">生涯累積 (LEGACY)</div>
+                        <div class="stats-number" id="legacy-count">0</div>
                     </div>
+                    <div class="badge-rack" id="badge-rack"></div>
+                </div>
+
+                <div class="lore-card" onclick="ui.modal('lore')">
+                    <div class="lore-title"><span><i class="fas fa-scroll"></i> 冒險指引</span><i class="fas fa-edit"></i></div>
+                    <div class="lore-desc" id="lore-text">...</div>
+                </div>
+
+                <div class="grid-board">
+                    <div class="col-card">
+                        <div class="col-header">
+                            <span style="color:var(--habit)">習慣 Habits</span>
+                            <i class="fas fa-trash btn-ghost" onclick="app.clear('habit')" title="清空習慣" style="border:none"></i>
+                        </div>
+                        <ul id="list-habit" class="task-list"></ul>
+                    </div>
+                    <div class="col-card">
+                        <div class="col-header">
+                            <span style="color:var(--daily)">每日 Daily</span>
+                            <i class="fas fa-sync-alt btn-ghost" onclick="app.clear('daily')" title="重置今日" style="border:none"></i>
+                        </div>
+                        <ul id="list-daily" class="task-list"></ul>
+                    </div>
+                    <div class="col-card">
+                        <div class="col-header">
+                            <span style="color:var(--todo)">待辦 Quest</span>
+                            <i class="fas fa-archive btn-ghost" onclick="app.clear('todo')" title="封存完成" style="border:none"></i>
+                        </div>
+                        <ul id="list-todo" class="task-list"></ul>
+                    </div>
+                </div>
             </div>
 
-            <div style="background:#fff; border-left:4px solid #3498db; padding:15px; border-radius:8px; margin-bottom:20px; cursor:pointer;" onclick="ui.modal('lore')">
-                <div style="font-weight:bold; color:#2c3e50; margin-bottom:5px;">📜 冒險指引</div>
-                <div id="lore-text" style="font-size:0.9rem; color:#666; white-space:pre-wrap;">設定目標...</div>
+            <div id="tab-gacha" class="tab-content">
+                <div style="text-align:center; padding:30px 0;">
+                    <i class="fas fa-dice-d20" style="font-size:5rem; color:var(--primary); margin-bottom:20px; transition: transform 2s cubic-bezier(0.1, 0.7, 0.1, 1);" id="gacha-icon"></i><br>
+                    <button class="btn btn-primary" onclick="app.spinGacha()">命運指引</button>
+                    <div id="gacha-result" style="display:none; margin-top:25px; border:2px solid var(--accent); padding:20px; border-radius:16px; background:#fffbf0;">
+                        <h3 id="res-title" style="margin:0; color:var(--accent)"></h3>
+                        <p id="res-desc" style="color:#666; margin:10px 0 20px 0;"></p>
+                        <button class="btn btn-primary" style="width:100%" onclick="app.acceptGacha()">接受挑戰</button>
+                    </div>
+                </div>
+                <h2>挑戰池 <button class="btn-ghost" onclick="app.clear('pool')">清空</button></h2>
+                <div style="display:flex; gap:10px;">
+                    <input id="pool-in" class="input-box" placeholder="新挑戰..." style="margin:0">
+                    <button class="btn btn-primary" onclick="app.addPool()">+</button>
+                </div>
+                <ul id="list-pool" class="task-list" style="margin-top:15px;"></ul>
             </div>
 
-            <div class="grid-board">
+            <div id="tab-void" class="tab-content">
+                <h2>情緒碎紙機</h2>
+                <div class="void-box">
+                    <p style="opacity:0.7; margin-top:0;">寫下焦慮，然後毀滅它。</p>
+                    <textarea id="void-input" class="input-box" rows="4" style="background:rgba(255,255,255,0.1); color:white; border:none; resize:none;"></textarea>
+                    <button class="btn btn-danger" style="width:100%;" onclick="app.shred()">毀滅念頭</button>
+                </div>
+                <h2>專注結界</h2>
+                <div style="background:white; padding:25px; border-radius:16px; text-align:center;">
+                    <i class="fas fa-stopwatch" style="font-size:2.5rem; color:var(--primary); margin-bottom:15px;"></i>
+                    <p style="font-size:0.9rem; color:#666; margin-bottom:20px;">25 分鐘絕對專注。</p>
+                    <button class="btn btn-primary" style="width:100%;" onclick="app.startFocus()">開啟結界</button>
+                </div>
+            </div>
+
+            <div id="tab-journal" class="tab-content">
+                <h2>每日檢討 <button class="btn-ghost" onclick="app.clear('journal')">清空</button></h2>
+                <div style="background:white; padding:20px; border-radius:16px; margin-bottom:20px;">
+                    <div style="display:flex; justify-content:space-between; font-size:1.8rem; margin-bottom:15px;">
+                        <span onclick="app.setMood('😭')" class="mood-btn">😭</span>
+                        <span onclick="app.setMood('😐')" class="mood-btn">😐</span>
+                        <span onclick="app.setMood('🙂')" class="mood-btn">🙂</span>
+                        <span onclick="app.setMood('🤩')" class="mood-btn">🤩</span>
+                        <span onclick="app.setMood('🧘')" class="mood-btn">🧘</span>
+                    </div>
+                    <textarea id="j-note" class="input-box" rows="3" placeholder="今日心得..."></textarea>
+                    <button class="btn btn-primary" style="width:100%" onclick="app.saveJournal()">記錄</button>
+                </div>
+                <ul id="list-journal" class="task-list"></ul>
+            </div>
+
+            <div id="tab-settings" class="tab-content">
+                <h2>資料管理</h2>
+                <button class="btn btn-primary" style="width:100%; margin-bottom:15px;" onclick="app.exportData()">備份資料 (JSON)</button>
+                <button class="btn btn-danger" style="width:100%" onclick="app.reset()">重置所有資料</button>
                 
-                <div class="col-card">
-                    <div class="col-header">
-                        <span>習慣 Habits</span>
-                        <i class="fas fa-trash" style="cursor:pointer" onclick="app.clear('habit')"></i>
-                    </div>
-                    <ul id="list-habit" class="task-list"></ul>
-                </div>
-
-                <div class="col-card">
-                    <div class="col-header">
-                        <span>每日 Daily</span>
-                        <i class="fas fa-sync-alt" style="cursor:pointer" onclick="app.clear('daily')"></i>
-                    </div>
-                    <ul id="list-daily" class="task-list"></ul>
-                </div>
-
-                <div class="col-card">
-                    <div class="col-header">
-                        <span>待辦 Quest</span>
-                        <i class="fas fa-archive" style="cursor:pointer" onclick="app.clear('todo')"></i>
-                    </div>
-                    <ul id="list-todo" class="task-list"></ul>
-                </div>
-
+                <h2 style="margin-top:30px;">累積歷史 <button class="btn-ghost" onclick="app.clear('legacy')">清空</button></h2>
+                <p style="font-size:0.8rem; color:#888;">這裡紀錄著所有轉化為高塔的行動。</p>
             </div>
 
-            <div style="text-align:center; margin-top:40px;">
-                <button onclick="app.reset()" style="background:none; border:none; color:#ccc; text-decoration:underline; cursor:pointer;">重置所有資料</button>
-            </div>
         </div>
     </div>
 
@@ -165,15 +256,15 @@
     <div id="modal-add" class="modal-overlay">
         <div class="modal">
             <h3>新增項目</h3>
-            <input id="inp-title" class="input-box" placeholder="標題">
-            <textarea id="inp-desc" class="input-box" rows="3" placeholder="詳細內容"></textarea>
+            <input id="inp-title" class="input-box" placeholder="標題 (Title)">
+            <textarea id="inp-desc" class="input-box" rows="3" placeholder="詳細內容 (Description)" style="resize:none;"></textarea>
             <div class="type-select">
-                <div class="type-opt active" onclick="ui.setType('habit', this)">習慣</div>
-                <div class="type-opt" onclick="ui.setType('daily', this)">每日</div>
-                <div class="type-opt" onclick="ui.setType('todo', this)">待辦</div>
+                <div class="type-opt active" data-t="habit" onclick="ui.setType('habit', this)">習慣</div>
+                <div class="type-opt" data-t="daily" onclick="ui.setType('daily', this)">每日</div>
+                <div class="type-opt" data-t="todo" onclick="ui.setType('todo', this)">待辦</div>
             </div>
-            <button class="btn-block" onclick="app.add()">新增</button>
-            <div style="text-align:center; margin-top:10px; color:#999; cursor:pointer;" onclick="document.getElementById('modal-add').style.display='none'">取消</div>
+            <button class="btn btn-primary" style="width:100%" onclick="app.add()">新增</button>
+            <div style="text-align:center; margin-top:15px; color:#999; cursor:pointer;" onclick="document.getElementById('modal-add').style.display='none'">取消</div>
         </div>
     </div>
 
@@ -181,233 +272,235 @@
         <div class="modal">
             <h3>編輯誓言</h3>
             <textarea id="inp-lore" class="input-box" rows="6"></textarea>
-            <button class="btn-block" onclick="app.saveLore()">保存</button>
-            <div style="text-align:center; margin-top:10px; color:#999; cursor:pointer;" onclick="document.getElementById('modal-lore').style.display='none'">取消</div>
+            <button class="btn btn-primary" style="width:100%" onclick="app.saveLore()">保存</button>
+            <div style="text-align:center; margin-top:15px; color:#999; cursor:pointer;" onclick="document.getElementById('modal-lore').style.display='none'">取消</div>
         </div>
+    </div>
+
+    <div id="focus-overlay" class="focus-overlay">
+        <div style="font-size:5rem; font-weight:100;" id="focus-timer">25:00</div>
+        <p style="opacity:0.8;">專注當下 · 遠離紛擾</p>
+        <button class="btn btn-ghost" style="color:white; border-color:white; margin-top:30px;" onclick="app.stopFocus()">放棄</button>
     </div>
 
     <div id="toast" class="toast">
         <span style="font-size:1.5rem">🏆</span>
-        <div>
-            <div style="font-size:0.8rem; opacity:0.8">成就解鎖</div>
-            <div style="font-weight:bold" id="toast-msg">築塔者</div>
-        </div>
+        <div><div style="font-size:0.8rem; opacity:0.8">成就解鎖</div><div style="font-weight:bold" id="toast-msg"></div></div>
     </div>
 
+    <nav class="nav bottom-nav">
+        <div class="nav-item active" onclick="ui.tab('home', this)"><i class="fas fa-dungeon"></i>聖殿</div>
+        <div class="nav-item" onclick="ui.tab('gacha', this)"><i class="fas fa-dice"></i>命運</div>
+        <div class="nav-item" onclick="ui.tab('void', this)"><i class="fas fa-ghost"></i>淨化</div>
+        <div class="nav-item" onclick="ui.tab('journal', this)"><i class="fas fa-book-open"></i>日誌</div>
+        <div class="nav-item" onclick="ui.tab('settings', this)"><i class="fas fa-cog"></i>設定</div>
+    </nav>
+
     <script>
-        /* --- 1. VISUAL ENGINE (Optimized) --- */
-        // Only draws when needed. No animation loop.
-        const vis = {
-            cvs: document.getElementById('world'),
-            ctx: document.getElementById('world').getContext('2d'),
-            
-            init() {
-                window.addEventListener('resize', () => this.draw());
-                this.draw();
+        /* --- 1. AUDIO (8-bit) --- */
+        const sfx = {
+            ctx: null, init(){ if(!this.ctx) this.ctx=new(window.AudioContext||window.webkitAudioContext)(); },
+            beep(f,t,d){
+                if(!this.ctx) this.init(); if(this.ctx.state==='suspended') this.ctx.resume();
+                const o=this.ctx.createOscillator(), g=this.ctx.createGain();
+                o.type=t; o.frequency.value=f; g.gain.exponentialRampToValueAtTime(0.001,this.ctx.currentTime+d);
+                o.connect(g); g.connect(this.ctx.destination); o.start(); o.stop(this.ctx.currentTime+d);
             },
+            click(){this.beep(800,'sine',0.05)}, win(){[440,554,659].forEach((f,i)=>setTimeout(()=>this.beep(f,'square',0.1),i*80))}, trash(){this.beep(150,'sawtooth',0.2)}
+        };
 
-            draw() {
-                const w = this.cvs.width = window.innerWidth;
-                const h = this.cvs.height = window.innerHeight * 0.5; // Top half
-                const ctx = this.ctx;
-                const count = store.db.legacy;
+        /* --- 2. VISUALS (Particles + Dynamic Sky) --- */
+        const vis = {
+            cvs: document.getElementById('world'), ctx: document.getElementById('world').getContext('2d'),
+            particles: [], clouds: [], stars: [],
+            init() {
+                window.addEventListener('resize', ()=>this.resize()); this.resize();
+                // Init Sky Objects
+                for(let i=0;i<30;i++) this.stars.push({x:Math.random(), y:Math.random()*0.6, s:Math.random()*2});
+                for(let i=0;i<5;i++) this.clouds.push({x:Math.random()*window.innerWidth, y:Math.random()*200, v:0.2+Math.random()*0.3, s:30+Math.random()*50});
+                this.loop();
+            },
+            resize(){ this.cvs.width=window.innerWidth; this.cvs.height=window.innerHeight; },
+            spawn(x,y,c){ for(let i=0;i<15;i++) this.particles.push({x,y,vx:(Math.random()-0.5)*10,vy:(Math.random()-0.5)*10,life:1,c}); },
+            loop() {
+                const w=this.cvs.width, h=this.cvs.height, ctx=this.ctx;
+                const hr=new Date().getHours(), isNight=hr<6||hr>=18;
+                
+                // Sky
+                const grad=ctx.createLinearGradient(0,0,0,h);
+                grad.addColorStop(0,isNight?'#0f2027':'#89f7fe'); grad.addColorStop(1,isNight?'#2c3e50':'#66a6ff');
+                ctx.fillStyle=grad; ctx.fillRect(0,0,w,h);
 
-                // Simple gradient fill (No heavy calculation)
-                // We rely on CSS for the main background to save JS overhead
-                ctx.clearRect(0, 0, w, h);
+                // Stars
+                if(isNight){ ctx.fillStyle='white'; this.stars.forEach(s=>{ ctx.globalAlpha=0.5+Math.random()*0.5; ctx.beginPath(); ctx.arc(s.x*w, s.y*h, s.s, 0, Math.PI*2); ctx.fill(); }); ctx.globalAlpha=1; }
 
-                // Draw Tower
-                const bw = 40; // Brick width
-                const bh = 20; // Brick height
-                const cols = Math.ceil(w / bw);
-                const startY = h;
+                // Clouds
+                ctx.fillStyle='rgba(255,255,255,0.2)';
+                this.clouds.forEach(c=>{ 
+                    c.x+=c.v; if(c.x>w+100)c.x=-100; 
+                    ctx.beginPath(); ctx.arc(c.x, c.y, c.s, 0, Math.PI*2); ctx.fill(); 
+                    ctx.beginPath(); ctx.arc(c.x+30, c.y+10, c.s*0.8, 0, Math.PI*2); ctx.fill();
+                });
 
-                let drawn = 0;
-                let row = 0;
-
-                ctx.fillStyle = '#95a5a6';
-                ctx.strokeStyle = 'rgba(255,255,255,0.4)';
-
-                while(drawn < count) {
-                    let inRow = Math.min(cols, count - drawn);
-                    // Center the row
-                    let xOffset = (w - (inRow * bw)) / 2;
-                    
-                    for(let i = 0; i < inRow; i++) {
-                        // Simple brick
-                        let x = xOffset + i * bw;
-                        let y = startY - (row * bh) - bh;
-                        
-                        // Vary color slightly for texture (static math, no random)
-                        let hue = 200 + ((row + i) % 20);
-                        ctx.fillStyle = `hsl(${hue}, 15%, 60%)`;
-                        
-                        ctx.fillRect(x, y, bw, bh);
-                        ctx.strokeRect(x, y, bw, bh);
+                // Tower
+                const count=store.db.legacy, bw=40, bh=20, cols=Math.ceil(w/bw), startY=h*0.9; // Draw from bottom up to avoid overlay issues
+                let drawn=0, row=0;
+                ctx.fillStyle='#95a5a6'; ctx.strokeStyle='rgba(255,255,255,0.3)';
+                while(drawn<count){
+                    let inRow=Math.min(cols, count-drawn);
+                    for(let i=0; i<inRow; i++){
+                        const x=(w-(inRow*bw))/2+i*bw, y=startY-(row*bh)-bh;
+                        // Use static color logic for stability
+                        const hue = 200 + ((row+i)%20);
+                        ctx.fillStyle=`hsl(${hue}, 15%, 60%)`;
+                        ctx.fillRect(x,y,bw,bh); ctx.strokeRect(x,y,bw,bh);
                     }
-                    drawn += inRow;
-                    row++;
+                    drawn+=inRow; row++;
                 }
+
+                // Particles
+                for(let i=this.particles.length-1; i>=0; i--){
+                    let p=this.particles[i];
+                    p.x+=p.vx; p.y+=p.vy; p.vy+=0.5; p.life-=0.02;
+                    ctx.fillStyle=p.c; ctx.globalAlpha=p.life;
+                    ctx.beginPath(); ctx.arc(p.x,p.y,3,0,Math.PI*2); ctx.fill();
+                    if(p.life<=0) this.particles.splice(i,1);
+                }
+                ctx.globalAlpha=1;
+                requestAnimationFrame(()=>this.loop());
             }
         };
 
-        /* --- 2. DATA STORE --- */
+        /* --- 3. DATA STORE --- */
         const store = {
-            db: JSON.parse(localStorage.getItem('lqe_v8')) || {
-                tasks: [], legacy: 0, lore: "在此設定你的核心目標...", lastLogin: Date.now()
-            },
-            save() { 
-                localStorage.setItem('lqe_v8', JSON.stringify(this.db));
-                app.render();
-                vis.draw(); // Redraw tower only on save
-                app.checkBadges();
-            },
+            db: JSON.parse(localStorage.getItem('lqe_v10')) || { tasks: [], legacy: 0, journals: [], pool: [{t:"深呼吸",d:"3次"}], lore: "設定目標...", lastLogin: Date.now() },
+            save() { localStorage.setItem('lqe_v10', JSON.stringify(this.db)); app.render(); app.checkBadges(); },
             checkReset() {
                 const today = new Date().toDateString();
-                const last = new Date(this.db.lastLogin).toDateString();
-                if(today !== last) {
-                    this.db.tasks.forEach(t => { if(t.type === 'daily') t.done = false; });
-                    this.db.lastLogin = Date.now();
-                    this.save();
+                if(today !== new Date(this.db.lastLogin).toDateString()) {
+                    this.db.tasks.forEach(t=>{ if(t.type==='daily') t.done=false; });
+                    this.db.lastLogin = Date.now(); this.save();
                 }
             }
         };
 
-        /* --- 3. BADGE SYSTEM (New) --- */
-        const badgeConfig = [
-            { limit: 10, icon: '🌱', title: '初學者' },
-            { limit: 50, icon: '🔨', title: '築塔者' },
-            { limit: 100, icon: '🏰', title: '堡壘' },
-            { limit: 500, icon: '👑', title: '國王' },
-            { limit: 1000, icon: '🌟', title: '傳奇' }
-        ];
-
         /* --- 4. APP LOGIC --- */
-        let addType = 'habit';
+        let addType = 'habit', currentMood = '';
+        const badges = [{l:10,i:'🌱',t:'初學者'},{l:50,i:'🔨',t:'築塔者'},{l:100,i:'🏰',t:'堡壘'},{l:500,i:'👑',t:'國王'}];
 
         const app = {
             init() {
-                store.checkReset();
-                this.render();
-                vis.init();
-                this.checkBadges(true); // Init render badges
+                if(store.db.tasks.length===0) {
+                    store.db.tasks=[{id:1,type:'habit',title:'喝水',desc:'保持水分',done:false},{id:2,type:'daily',title:'運動',desc:'30分',done:false},{id:3,type:'todo',title:'設定APP',desc:'熟悉',done:false}];
+                    store.save();
+                }
+                store.checkReset(); this.render(); vis.init(); this.checkBadges(true);
             },
-
             render() {
-                // Stats
                 document.getElementById('legacy-count').innerText = store.db.legacy;
                 document.getElementById('lore-text').innerText = store.db.lore;
                 document.getElementById('inp-lore').value = store.db.lore;
-
-                // Lists
-                const lists = { habit: '', daily: '', todo: '' };
-                store.db.tasks.forEach(t => {
-                    lists[t.type] += `
-                        <li class="task-item type-${t.type} ${t.done ? 'done' : ''}" onclick="this.classList.toggle('expanded')">
-                            <div class="check-box" onclick="event.stopPropagation(); app.check('${t.id}')"></div>
-                            <div class="task-content">
-                                <div>${t.title}</div>
-                                <div class="task-desc">${t.desc || ''}</div>
-                            </div>
-                            <i class="fas fa-trash" style="color:#ddd; padding:5px;" onclick="event.stopPropagation(); app.del('${t.id}')"></i>
-                        </li>`;
+                ['habit','daily','todo'].forEach(type => {
+                    const ul = document.getElementById('list-'+type); ul.innerHTML='';
+                    store.db.tasks.forEach(t => {
+                        if(t.type === type) {
+                            if(type==='todo' && t.done) return;
+                            ul.innerHTML += `
+                            <li class="task-item type-${t.type} ${t.done?'done':''}" onclick="this.classList.toggle('expanded')">
+                                <div class="check-box" onclick="event.stopPropagation(); app.check('${t.id}', event)"></div>
+                                <div class="task-content"><div class="task-title">${t.title}</div><div class="task-desc">${t.desc||''}</div></div>
+                                <i class="fas fa-trash" style="color:#ddd;padding:5px;" onclick="event.stopPropagation(); app.del('${t.id}')"></i>
+                            </li>`;
+                        }
+                    });
                 });
-                
-                document.getElementById('list-habit').innerHTML = lists.habit;
-                document.getElementById('list-daily').innerHTML = lists.daily;
-                document.getElementById('list-todo').innerHTML = lists.todo;
+                ui.renderList('list-pool', store.db.pool, i=>`<b>${i.t}</b> <small>${i.d}</small>`);
+                ui.renderList('list-journal', store.db.journals, i=>`<small>${i.date} ${i.mood||''}</small><br>${i.text}`);
             },
-
-            checkBadges(silent = false) {
-                const rack = document.getElementById('badge-rack');
-                rack.innerHTML = '';
-                const current = store.db.legacy;
-                
-                badgeConfig.forEach(b => {
-                    const unlocked = current >= b.limit;
-                    const el = document.createElement('div');
-                    el.className = `badge ${unlocked ? 'unlocked' : ''}`;
-                    el.innerText = b.icon;
-                    el.title = `${b.title} (${b.limit})`;
-                    rack.appendChild(el);
-
-                    // Toast logic (Simple check: if just reached)
-                    if(!silent && current === b.limit) ui.toast(b.title, b.icon);
+            checkBadges(silent) {
+                const r=document.getElementById('badge-rack'); r.innerHTML='';
+                badges.forEach(b => {
+                    const unlk = store.db.legacy >= b.l;
+                    r.innerHTML += `<div class="badge ${unlk?'unlocked':''}">${b.i}</div>`;
+                    if(!silent && store.db.legacy === b.l) ui.toast(b.t, b.i);
                 });
             },
-
-            // Actions
             add() {
-                const t = document.getElementById('inp-title').value;
-                const d = document.getElementById('inp-desc').value;
-                if(t) {
-                    store.db.tasks.push({ id:Date.now().toString(36), type:addType, title:t, desc:d, done:false });
-                    store.save();
-                    document.getElementById('modal-add').style.display = 'none';
-                    document.getElementById('inp-title').value = '';
-                    document.getElementById('inp-desc').value = '';
-                }
+                const t=document.getElementById('inp-title').value, d=document.getElementById('inp-desc').value;
+                if(t) { store.db.tasks.push({id:Date.now().toString(36), type:addType, title:t, desc:d, done:false}); store.save(); document.getElementById('modal-add').style.display='none'; document.getElementById('inp-title').value=''; sfx.click(); }
             },
-            check(id) {
-                const t = store.db.tasks.find(x => x.id === id);
+            check(id, e) {
+                const t = store.db.tasks.find(x=>x.id==id);
                 if(t) {
-                    if(t.type === 'habit') { store.db.legacy++; }
-                    else {
-                        t.done = !t.done;
-                        if(t.type === 'todo' && t.done) store.db.legacy++; // Todo adds legacy on done
+                    // Particle Spawn
+                    if(e) vis.spawn(e.clientX, e.clientY, '#f1c40f');
+                    
+                    if(t.type==='habit') { store.db.legacy++; sfx.win(); }
+                    else { 
+                        t.done=!t.done; 
+                        if(t.type==='todo' && t.done) { store.db.legacy++; sfx.win(); }
+                        else sfx.click(); 
                     }
                     store.save();
                 }
             },
-            del(id) {
-                if(confirm('刪除？')) {
-                    store.db.tasks = store.db.tasks.filter(x => x.id !== id);
-                    store.save();
-                }
-            },
+            del(id) { if(confirm('刪除？')) { store.db.tasks=store.db.tasks.filter(x=>x.id!=id); store.save(); sfx.trash(); } },
             clear(type) {
-                if(confirm(`清空 ${type}？`)) {
-                    if(type === 'todo') {
-                        // Harvest logic
-                        const done = store.db.tasks.filter(t => t.type==='todo' && t.done);
-                        store.db.legacy += done.length; // Ensure they are counted
-                        store.db.tasks = store.db.tasks.filter(t => !(t.type==='todo' && t.done));
-                    } else {
-                        store.db.tasks = store.db.tasks.filter(t => t.type !== type);
-                    }
-                    store.save();
-                }
-            },
-            saveLore() {
-                store.db.lore = document.getElementById('inp-lore').value;
+                if(!confirm('清空？')) return;
+                sfx.trash();
+                if(type==='todo') {
+                    const done = store.db.tasks.filter(t=>t.type==='todo' && t.done);
+                    store.db.legacy += done.length;
+                    store.db.tasks = store.db.tasks.filter(t=>!(t.type==='todo'&&t.done));
+                    vis.spawn(window.innerWidth/2, window.innerHeight/2, '#f1c40f');
+                } else if(['habit','daily'].includes(type)) {
+                    store.db.tasks=store.db.tasks.filter(t=>t.type!==type);
+                } else if(type==='pool') store.db.pool=[];
+                else if(type==='journal') store.db.journals=[];
+                else if(type==='legacy') store.db.legacy = 0;
                 store.save();
-                document.getElementById('modal-lore').style.display = 'none';
             },
-            reset() {
-                if(confirm('警告：刪除所有資料？')) { localStorage.removeItem('lqe_v8'); location.reload(); }
-            }
+            saveLore() { store.db.lore=document.getElementById('inp-lore').value; store.save(); document.getElementById('modal-lore').style.display='none'; },
+            addPool() { const v=document.getElementById('pool-in').value; if(v){ store.db.pool.push({t:v,d:''}); store.save(); document.getElementById('pool-in').value=''; } },
+            spinGacha() { 
+                if(!store.db.pool.length) return alert('空池');
+                const icon = document.getElementById('gacha-icon');
+                icon.style.transform = 'rotate(1080deg)'; sfx.click();
+                setTimeout(() => {
+                    icon.style.transform = 'rotate(0deg)';
+                    const i = store.db.pool[Math.floor(Math.random()*store.db.pool.length)];
+                    this.tempGacha = i;
+                    document.getElementById('res-title').innerText = i.t; document.getElementById('res-desc').innerText = i.d;
+                    document.getElementById('gacha-result').style.display='block'; sfx.win();
+                }, 1000);
+            },
+            acceptGacha() { if(this.tempGacha){ store.db.tasks.push({id:Date.now().toString(36), type:'todo', title:this.tempGacha.t, desc:'命運挑戰', done:false}); store.save(); document.getElementById('gacha-result').style.display='none'; ui.tab('home',document.querySelectorAll('.nav-item')[0]); } },
+            shred() { 
+                const e=document.getElementById('void-input'); 
+                if(e.value){ sfx.trash(); vis.spawn(window.innerWidth/2, window.innerHeight/2, '#333'); e.style.transition='0.5s'; e.style.transform='scale(0)'; setTimeout(()=>{e.value='';e.style.transform='none'},500); } 
+            },
+            startFocus() {
+                document.getElementById('focus-overlay').style.display='flex';
+                let s=25*60; this.tmr=setInterval(()=>{ s--; document.getElementById('focus-timer').innerText=`${Math.floor(s/60)}:${(s%60).toString().padStart(2,'0')}`; if(s<=0){clearInterval(this.tmr);sfx.win();alert('完成');this.stopFocus();} },1000);
+            },
+            stopFocus(){ clearInterval(this.tmr); document.getElementById('focus-overlay').style.display='none'; },
+            setMood(m){ currentMood=m; sfx.click(); document.querySelectorAll('.mood-btn').forEach(b=>b.style.opacity=b.innerText===m?'1':'0.5'); },
+            saveJournal(){ const t=document.getElementById('j-note').value; if(t||currentMood){ store.db.journals.unshift({date:new Date().toLocaleString(), mood:currentMood, text:t}); store.save(); document.getElementById('j-note').value=''; sfx.win(); } },
+            exportData() { const a=document.createElement('a'); a.href="data:text/json;charset=utf-8,"+encodeURIComponent(JSON.stringify(store.db)); a.download="sanctuary_data.json"; a.click(); },
+            reset(){ if(confirm('警告：刪除所有資料？')){ localStorage.removeItem('lqe_v10'); location.reload(); } },
+            toggleView() { document.querySelector('.header-spacer').classList.toggle('collapsed'); }
         };
 
         /* --- 5. UI HELPERS --- */
         const ui = {
-            modal(id) { document.getElementById('modal-'+id).style.display = 'flex'; },
-            setType(type, el) {
-                addType = type;
-                document.querySelectorAll('.type-opt').forEach(e => e.classList.remove('active'));
-                el.classList.add('active');
-            },
-            toast(msg, icon) {
-                const t = document.getElementById('toast');
-                document.getElementById('toast-msg').innerText = msg;
-                t.querySelector('span').innerText = icon;
-                t.classList.add('show');
-                setTimeout(() => t.classList.remove('show'), 3000);
-            }
+            tab(id, el) { document.querySelectorAll('.tab-content').forEach(e=>e.classList.remove('active')); document.getElementById('tab-'+id).classList.add('active'); document.querySelectorAll('.nav-item').forEach(e=>e.classList.remove('active')); el.classList.add('active'); document.querySelector('.fab').style.display=id==='home'?'flex':'none'; sfx.click(); },
+            modal(id) { document.getElementById('modal-'+id).style.display='flex'; },
+            setType(t, el) { addType=t; document.querySelectorAll('.type-opt').forEach(e=>e.classList.remove('active')); el.classList.add('active'); },
+            toast(t,i) { const el=document.getElementById('toast'); document.getElementById('toast-msg').innerText=t; el.querySelector('span').innerText=i; el.classList.add('show'); setTimeout(()=>el.classList.remove('show'),3000); },
+            renderList(id, list, fn) { const ul=document.getElementById(id); ul.innerHTML=''; list.forEach(i=> ul.innerHTML+=`<li class="task-item"><div class="task-content">${fn(i)}</div></li>`); }
         };
 
-        // Init
         app.init();
-
     </script>
 </body>
 </html>
